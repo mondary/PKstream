@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `2026.08.43`
+Statut : `2026.08.44`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,12 @@ Statut : `2026.08.43`
 ---
 
 ## Releases
+
+### [2026.08.44] - 2026-07-28
+#### Fixed
+- Restauration du lecteur HLS natif pour tous les flux Android TV.
+#### Added
+- Passage automatique en Picture-in-Picture lors de la sortie de l'application pendant une lecture.
 
 ### [2026.08.43] - 2026-07-28
 #### Added

@@ -1,7 +1,11 @@
 package design.mondary.pkstream
 
 import android.os.Bundle
+import android.app.PictureInPictureParams
 import android.net.Uri
+import android.content.pm.PackageManager
+import android.os.Build
+import android.util.Rational
 import android.util.Base64
 import android.view.ViewGroup
 import androidx.activity.compose.BackHandler
@@ -78,7 +82,9 @@ import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.exoplayer.source.MergingMediaSource
+import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -98,6 +104,7 @@ private val AdultSurface = Color(0xFF181818)
 private val IsKids = BuildConfig.IS_KIDS
 private val AppBackground get() = if (IsKids) KidsBackground else AdultBackground
 private val AppSurface get() = if (IsKids) KidsSurface else AdultSurface
+private object PlayerSession { var active = false }
 
 data class Content(
     val newsid: String,
@@ -116,6 +123,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { PKStreamApp() }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (PlayerSession.active && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9)).build())
+        }
     }
 }
 
@@ -411,18 +425,20 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     var subtitlesEnabled by remember(source) { mutableStateOf(false) }
     var subtitlesAvailable by remember(source) { mutableStateOf(false) }
     val player = remember(source) {
-        val mediaItem = MediaItem.Builder().setUri(source).apply {
-            subtitleUrl?.let {
-                setSubtitleConfigurations(listOf(
-                    MediaItem.SubtitleConfiguration.Builder(Uri.parse(it))
-                        .setMimeType(MimeTypes.TEXT_VTT)
-                        .setLanguage("fr")
-                        .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                        .build(),
-                ))
-            }
-        }.build()
-        val mediaSource = DefaultMediaSourceFactory(context).createMediaSource(mediaItem)
+        val videoSource = HlsMediaSource.Factory(DefaultHttpDataSource.Factory())
+            .createMediaSource(MediaItem.fromUri(source))
+        val mediaSource = subtitleUrl?.let {
+            val subtitle = MediaItem.SubtitleConfiguration.Builder(Uri.parse(it))
+                .setMimeType(MimeTypes.TEXT_VTT)
+                .setLanguage("fr")
+                .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                .build()
+            MergingMediaSource(
+                videoSource,
+                SingleSampleMediaSource.Factory(DefaultHttpDataSource.Factory())
+                    .createMediaSource(subtitle, C.TIME_UNSET),
+            )
+        } ?: videoSource
         ExoPlayer.Builder(context).build().apply {
             trackSelectionParameters = trackSelectionParameters.buildUpon()
                 .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !subtitlesEnabled)
@@ -456,7 +472,8 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
             }
         }
         player.addListener(listener)
-        onDispose { player.removeListener(listener); player.release() }
+        PlayerSession.active = true
+        onDispose { PlayerSession.active = false; player.removeListener(listener); player.release() }
     }
 
     LaunchedEffect(lastKeyTime) {
@@ -469,7 +486,7 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
         if (speedBadgeTime > 0) { speedBadgeVisible = true; delay(1500); speedBadgeVisible = false }
     }
 
-    BackHandler(onBack = onBack)
+    BackHandler { player.stop(); onBack() }
     Box(
         Modifier.fillMaxSize().background(Color.Black).focusable()
             .onKeyEvent { event ->
