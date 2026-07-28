@@ -6,8 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val appVersionCode = 9
-val appVersionName = "1.2026.25"
+val appVersionCode = 10
+val appVersionName = "1.2026.26"
 
 android {
     namespace = "design.mondary.pkstream"
