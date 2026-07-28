@@ -60,7 +60,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onKeyEvent
+import kotlinx.coroutines.delay
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -330,6 +340,8 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val source = remember(stream.url) { PROXY + URLEncoder.encode(Base64.encodeToString(stream.url.toByteArray(), Base64.NO_WRAP), "UTF-8") }
     var playbackError by remember(source) { mutableStateOf<String?>(null) }
+    var controlsVisible by remember(source) { mutableStateOf(true) }
+    var lastKeyTime by remember(source) { mutableStateOf(System.currentTimeMillis()) }
     val player = remember(source) {
         val mediaSource = HlsMediaSource.Factory(DefaultHttpDataSource.Factory())
             .createMediaSource(MediaItem.fromUri(source))
@@ -339,6 +351,10 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
             playWhenReady = true
         }
     }
+    var position by remember(player) { mutableStateOf(0L) }
+    LaunchedEffect(player) { while (true) { position = player.currentPosition; delay(500) } }
+    val duration = player.duration.coerceAtLeast(0)
+
     DisposableEffect(player) {
         val listener = object : Player.Listener {
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
@@ -348,16 +364,66 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
         player.addListener(listener)
         onDispose { player.removeListener(listener); player.release() }
     }
+
+    LaunchedEffect(lastKeyTime) {
+        delay(4000)
+        controlsVisible = false
+    }
+
     BackHandler(onBack = onBack)
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
+    Box(
+        Modifier.fillMaxSize().background(Color.Black).focusable()
+            .onKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                lastKeyTime = System.currentTimeMillis()
+                controlsVisible = true
+                when (event.key) {
+                    Key.DirectionCenter, Key.Enter -> { if (player.isPlaying) player.pause() else player.play(); true }
+                    Key.DirectionRight -> { player.seekTo((player.currentPosition + 10_000).coerceAtMost(duration)); true }
+                    Key.DirectionLeft -> { player.seekTo((player.currentPosition - 10_000).coerceAtLeast(0)); true }
+                    Key.MediaPlay -> { player.play(); true }
+                    Key.MediaPause -> { player.pause(); true }
+                    Key.MediaPlayPause -> { if (player.isPlaying) player.pause() else player.play(); true }
+                    Key.MediaRewind -> { player.seekTo((player.currentPosition - 10_000).coerceAtLeast(0)); true }
+                    Key.MediaFastForward -> { player.seekTo((player.currentPosition + 10_000).coerceAtMost(duration)); true }
+                    else -> false
+                }
+            }
+    ) {
         AndroidView(factory = { PlayerView(it).apply {
             this.player = player
-            useController = true
-            controllerShowTimeoutMs = 3_000
+            useController = false
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         } }, modifier = Modifier.fillMaxSize())
-        playbackError?.let { Text(it, color = Color.White, modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).background(Color(0xCC7A1E1E), RoundedCornerShape(8.dp)).padding(14.dp)) }
+
+        AnimatedVisibility(controlsVisible, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
+            Column(
+                Modifier.background(Color(0xCC000000)).fillMaxWidth().padding(horizontal = 48.dp, vertical = 20.dp),
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(formatTime(position), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(if (player.isPlaying) "⏸ Lecture" else "▶ Pause", color = Color(0xFFF0C44E), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(formatTime(duration), color = Color.LightGray, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(12.dp))
+                Box(
+                    Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color(0xFF444444))
+                ) {
+                    val progress = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
+                    Box(Modifier.fillMaxWidth(progress).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(Color(0xFFF0C44E)))
+                }
+                Spacer(Modifier.height(8.dp))
+                Text("◀◀ -10s    OK: Lecture/Pause    ▶▶ +10s    Retour: Quitter", color = Color.Gray, fontSize = 13.sp)
+            }
+        }
+
+        playbackError?.let { Text(it, color = Color.White, modifier = Modifier.align(Alignment.Center).padding(24.dp).background(Color(0xCC7A1E1E), RoundedCornerShape(8.dp)).padding(14.dp)) }
     }
+}
+
+private fun formatTime(ms: Long): String {
+    val s = ms / 1000
+    return "%d:%02d:%02d".format(s / 3600, (s % 3600) / 60, s % 60)
 }
 
 @Composable
