@@ -49,7 +49,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.AndroidView
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -213,6 +213,10 @@ private object Api {
         }
     }
     private suspend fun get(path: String): String = withContext(Dispatchers.IO) {
-        (URL(API + path).openConnection() as HttpURLConnection).apply { connectTimeout = 15000; readTimeout = 30000; setRequestProperty("User-Agent", "PK Stream TV/1.0"); inputStream.bufferedReader().use { return@withContext it.readText() } }
+        val connection = URL(API + path).openConnection() as HttpURLConnection
+        connection.connectTimeout = 15_000
+        connection.readTimeout = 30_000
+        connection.setRequestProperty("User-Agent", "PK Stream TV/1.0")
+        connection.inputStream.bufferedReader().use { it.readText() }
     }
 }
