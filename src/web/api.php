@@ -50,29 +50,35 @@ if (isset($_GET['api'])) {
     $api = $_GET['api'];
 
     if ($api === 'featured') {
-        // Films from homepage
+        // Series from dedicated page (used to filter homepage)
+        $htmlS = proxy_get('/series/en-cours/');
+        preg_match_all('/href="\/index\.php\?newsid=(\d+)"[^>]*alt="([^"]*)"[^>]*>.*?<img[^>]+src="([^"]*)"/s', $htmlS, $ms);
+        $series = [];
+        $seriesNids = [];
+        for ($i = 0; $i < count($ms[1]); $i++) {
+            $nid = $ms[1][$i];
+            $seriesNids[$nid] = true;
+            $series[] = [
+                'newsid' => $nid,
+                'title' => trim($ms[2][$i]),
+                'poster' => html_entity_decode($ms[3][$i]),
+            ];
+        }
+
+        // Films from homepage, excluding known series
         $html = proxy_get('/');
         preg_match_all('/href="\/index\.php\?newsid=(\d+)"[^>]*alt="([^"]*)"[^>]*>.*?<img[^>]+src="([^"]*)"/s', $html, $m);
         $films = [];
         for ($i = 0; $i < count($m[1]); $i++) {
+            $nid = $m[1][$i];
             $title = trim($m[2][$i]);
+            // Exclude if it's in the series page, or has "Saison X" in title
+            if (isset($seriesNids[$nid])) continue;
             if (preg_match('/\s-\sSaison\s\d+/iu', $title)) continue;
             $films[] = [
-                'newsid' => $m[1][$i],
+                'newsid' => $nid,
                 'title' => $title,
                 'poster' => html_entity_decode($m[3][$i]),
-            ];
-        }
-
-        // Series from dedicated page
-        $htmlS = proxy_get('/series/en-cours/');
-        preg_match_all('/href="\/index\.php\?newsid=(\d+)"[^>]*alt="([^"]*)"[^>]*>.*?<img[^>]+src="([^"]*)"/s', $htmlS, $ms);
-        $series = [];
-        for ($i = 0; $i < count($ms[1]); $i++) {
-            $series[] = [
-                'newsid' => $ms[1][$i],
-                'title' => trim($ms[2][$i]),
-                'poster' => html_entity_decode($ms[3][$i]),
             ];
         }
 
@@ -91,6 +97,11 @@ if (isset($_GET['api'])) {
         $q = $_GET['q'] ?? '';
         $body = 'do=search&subaction=search&story=' . urlencode($q);
         $html = proxy_post('/index.php', $body);
+        // Detect rate-limit page from fs16
+        if (stripos($html, 'RALENTIS UN PEU') !== false || stripos($html, 'Ralentis un peu') !== false) {
+            echo json_encode(['results' => [], 'rateLimited' => true]);
+            exit;
+        }
         preg_match_all('/href="\/index\.php\?newsid=(\d+)"[^>]*alt="([^"]*)"[^>]*>.*?<img[^>]+src="([^"]*)"/s', $html, $m);
         $results = [];
         for ($i = 0; $i < count($m[1]); $i++) {

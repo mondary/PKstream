@@ -279,6 +279,7 @@ async function doSearch(q){
     lastSearchReq=ctrl;
     const d=await fetch(`${API}?api=search&q=${encodeURIComponent(q)}`,{signal:ctrl.signal}).then(r=>r.json());
     const items=d.results||[];
+    if(d.rateLimited){$('search-results').innerHTML='<div class="search-hint">Recherche en cours — fs16 attend… Réessayez dans 20 sec.</div>';return;}
     if(!items.length){$('search-results').innerHTML='<div class="search-hint">Aucun résultat pour « '+esc(q)+' »</div>';return;}
     $('search-results').innerHTML=`<div class="search-grid">${items.map((it,i)=>
       `<button class="card" type="button" data-search-index="${i}">
