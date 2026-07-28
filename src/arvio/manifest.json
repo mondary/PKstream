@@ -1,0 +1,20 @@
+{
+  "name": "ARVIO - French Stream (fs16.lol)",
+  "version": "1.0.0",
+  "description": "French streaming source from fs16.lol (films & séries VF/VOSTFR)",
+  "author": "ARVIO",
+  "scrapers": [
+    {
+      "id": "arvio-french-stream",
+      "name": "ARVIO French Stream",
+      "description": "Films et séries en VF/VOSTFR depuis fs16.lol",
+      "version": "1.0.0",
+      "filename": "scraper.js",
+      "supportedTypes": ["movie", "tv"],
+      "enabled": true,
+      "logo": "https://fs16.lol/favicon-96x96.png",
+      "contentLanguage": ["fr"],
+      "formats": ["mp4", "m3u8"]
+    }
+  ]
+}

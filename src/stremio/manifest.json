@@ -1,0 +1,26 @@
+{
+  "id": "design.mondary.fs16",
+  "version": "1.0.2",
+  "name": "French Stream (test)",
+  "description": "Source de test fs16.lol pour clients compatibles Stremio.",
+  "resources": ["catalog", "meta", "stream"],
+  "types": ["movie", "series"],
+  "idPrefixes": ["tt"],
+  "catalogs": [
+    {
+      "type": "movie",
+      "id": "fs16-movies",
+      "name": "French Stream - Films",
+      "extra": []
+    },
+    {
+      "type": "series",
+      "id": "fs16-series",
+      "name": "French Stream - Series",
+      "extra": []
+    }
+  ],
+  "behaviorHints": {
+    "configurable": false
+  }
+}
