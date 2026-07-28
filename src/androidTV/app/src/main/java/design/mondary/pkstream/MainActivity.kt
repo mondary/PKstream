@@ -3,6 +3,10 @@ package design.mondary.pkstream
 import android.os.Bundle
 import android.util.Base64
 import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +39,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -70,6 +75,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.onKeyEvent
 import kotlinx.coroutines.delay
 import androidx.media3.common.MediaItem
+import androidx.media3.common.C
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
@@ -88,6 +94,11 @@ private const val PROXY = "https://mondary.design/pk/stream/stremio/proxy.php?em
 private val KidsBackground = Color(0xFF07182C)
 private val KidsSurface = Color(0xFF102A47)
 private val KidsYellow = Color(0xFFFFD84D)
+private val AdultBackground = Color(0xFF070707)
+private val AdultSurface = Color(0xFF181818)
+private val IsKids = BuildConfig.IS_KIDS
+private val AppBackground get() = if (IsKids) KidsBackground else AdultBackground
+private val AppSurface get() = if (IsKids) KidsSurface else AdultSurface
 
 data class Content(
     val newsid: String,
@@ -98,7 +109,7 @@ data class Content(
     val source: String = "fs16",
 )
 data class Home(val films: List<Content>, val series: List<Content>, val animes: List<Content>)
-data class Stream(val title: String, val url: String)
+data class Stream(val title: String, val url: String, val embed: Boolean = false)
 data class Season(val season: Int, val newsid: String, val title: String)
 data class Episode(val number: Int, val title: String, val synopsis: String, val poster: String)
 
@@ -113,7 +124,7 @@ class MainActivity : ComponentActivity() {
 private fun PKStreamApp() {
     var selected by remember { mutableStateOf<Content?>(null) }
     var playerStream by remember { mutableStateOf<Stream?>(null) }
-    MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(background = KidsBackground, surface = KidsSurface, primary = KidsYellow)) {
+    MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(background = AppBackground, surface = AppSurface, primary = KidsYellow)) {
         when {
             playerStream != null -> PlayerScreen(playerStream!!, onBack = { playerStream = null })
             selected != null -> DetailsScreen(selected!!, onBack = { selected = null }, onPlay = { playerStream = it })
@@ -124,7 +135,16 @@ private fun PKStreamApp() {
 
 @Composable
 private fun HomeScreen(onSelect: (Content) -> Unit) {
-    val home by produceState<Home?>(initialValue = null) { value = runCatching { Api.kids() }.getOrNull() }
+    val home by produceState<Home?>(initialValue = null) { value = runCatching { if (IsKids) Api.kids() else Api.featured() }.getOrNull() }
+    var query by remember { mutableStateOf("") }
+    val search by produceState<List<Content>>(initialValue = emptyList(), query, home) {
+        value = when {
+            query.length < 3 -> emptyList()
+            IsKids -> listOf(home?.films.orEmpty(), home?.series.orEmpty(), home?.animes.orEmpty()).flatten()
+                .filter { it.title.contains(query, ignoreCase = true) }
+            else -> runCatching { Api.search(query) }.getOrDefault(emptyList())
+        }
+    }
     val firstCardFocus = remember { FocusRequester() }
     LaunchedEffect(home?.films) {
         if (home?.films?.isNotEmpty() == true) {
@@ -132,7 +152,7 @@ private fun HomeScreen(onSelect: (Content) -> Unit) {
         }
     }
     Column(
-        Modifier.fillMaxSize().background(KidsBackground).padding(vertical = 28.dp)
+        Modifier.fillMaxSize().background(AppBackground).padding(vertical = 28.dp)
             .verticalScroll(rememberScrollState())
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 48.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -144,18 +164,38 @@ private fun HomeScreen(onSelect: (Content) -> Unit) {
             )
             Spacer(Modifier.width(16.dp))
             Text("PK ", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black)
-            Text("KIDS", color = Color(0xFFF0C44E), fontSize = 30.sp, fontWeight = FontWeight.Black)
+            Text(if (IsKids) "KIDS" else "STREAM", color = Color(0xFFF0C44E), fontSize = 30.sp, fontWeight = FontWeight.Black)
+            Spacer(Modifier.width(10.dp))
+            Text("v${BuildConfig.VERSION_NAME}", color = Color(0xFF8FA8C0), fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.weight(1f))
-            Text("Films animation · Séries animation · Animés", color = Color(0xFFCAE4FA), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                label = { Text("Rechercher") },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedLabelColor = KidsYellow,
+                    unfocusedLabelColor = Color(0xFFCAE4FA),
+                    focusedBorderColor = KidsYellow,
+                    unfocusedBorderColor = Color(0xFF92B5D7),
+                    cursorColor = KidsYellow,
+                ),
+                modifier = Modifier.width(420.dp),
+            )
         }
         Spacer(Modifier.height(26.dp))
-        if (home == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Chargement…", color = Color.LightGray) }
+        if (query.length >= 3) ContentRow("Résultats", search, onSelect, firstCardFocus)
+        else if (home == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Chargement…", color = Color.LightGray) }
         else {
-            ContentRow("Films animation", home!!.films, onSelect, firstCardFocus)
+            ContentRow(if (IsKids) "Films animation" else "Derniers films", home!!.films, onSelect, firstCardFocus)
             Spacer(Modifier.height(28.dp))
-            ContentRow("Séries animation", home!!.series, onSelect, null)
-            Spacer(Modifier.height(28.dp))
-            ContentRow("Animés", home!!.animes, onSelect, null)
+            ContentRow(if (IsKids) "Séries animation" else "Dernières séries", home!!.series, onSelect, null)
+            if (IsKids) {
+                Spacer(Modifier.height(28.dp))
+                ContentRow("Animés", home!!.animes, onSelect, null)
+            }
         }
     }
 }
@@ -209,7 +249,7 @@ private fun FilmScreen(content: Content, onBack: () -> Unit, onPlay: (Stream) ->
     }
     val backdrop = details?.optString("backdrop") ?: ""
     val desc = details?.optString("description") ?: ""
-    Box(Modifier.fillMaxSize().background(KidsBackground)) {
+    Box(Modifier.fillMaxSize().background(AppBackground)) {
         if (backdrop.isNotEmpty()) AsyncImage(backdrop, "", Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Color(0xDD070707)))
         Row(Modifier.fillMaxSize().padding(horizontal = 64.dp, vertical = 48.dp)) {
@@ -257,7 +297,7 @@ private fun SeriesScreen(content: Content, onBack: () -> Unit, onPlay: (Stream) 
         value = runCatching { Api.episodes(activeSeasonNid, content.source) }.getOrDefault(emptyList())
     }
 
-    Column(Modifier.fillMaxSize().background(KidsBackground).padding(48.dp).verticalScroll(rememberScrollState())) {
+    Column(Modifier.fillMaxSize().background(AppBackground).padding(48.dp).verticalScroll(rememberScrollState())) {
         Text(content.title, color = Color.White, fontSize = 40.sp, lineHeight = 48.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(24.dp))
 
@@ -329,7 +369,7 @@ private fun EpisodeSourcesScreen(seriesTitle: String, season: Int, episode: Epis
     val streams by produceState<List<Stream>>(emptyList(), episode.number) {
         value = runCatching { Api.streams(seasonNid, "tv", season, episode.number, source) }.getOrDefault(emptyList())
     }
-    Row(Modifier.fillMaxSize().background(KidsBackground).padding(56.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxSize().background(AppBackground).padding(56.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.fillMaxHeight().padding(vertical = 42.dp), verticalArrangement = Arrangement.Center) {
             Text(seriesTitle, color = Color.White, fontSize = 36.sp, lineHeight = 44.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text("S${season} E${episode.number} - ${episode.title}", color = Color(0xFFF0C44E), fontSize = 20.sp)
@@ -358,16 +398,42 @@ private fun SourceButton(stream: Stream, onPlay: (Stream) -> Unit) {
 @Composable
 private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    if (stream.embed && stream.title.contains("VOSTFR", ignoreCase = true)) {
+        BackHandler(onBack = onBack)
+        AndroidView(
+            factory = { ctx ->
+                CookieManager.getInstance().setAcceptCookie(true)
+                WebView(ctx).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.mediaPlaybackRequiresUserGesture = false
+                    settings.userAgentString = "Mozilla/5.0 (Linux; Android 12; Android TV) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36"
+                    webViewClient = WebViewClient()
+                    webChromeClient = WebChromeClient()
+                    setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                    loadUrl(stream.url)
+                }
+            },
+            modifier = Modifier.fillMaxSize().background(Color.Black),
+        )
+        return
+    }
     val source = remember(stream.url) { PROXY + URLEncoder.encode(Base64.encodeToString(stream.url.toByteArray(), Base64.NO_WRAP), "UTF-8") }
     var playbackError by remember(source) { mutableStateOf<String?>(null) }
     var controlsVisible by remember(source) { mutableStateOf(true) }
     var lastKeyTime by remember(source) { mutableStateOf(System.currentTimeMillis()) }
     var speed by remember(source) { mutableStateOf(1.0f) }
     var speedBadgeTime by remember(source) { mutableStateOf(0L) }
+    var subtitlesEnabled by remember(source) { mutableStateOf(false) }
+    var subtitlesAvailable by remember(source) { mutableStateOf(false) }
     val player = remember(source) {
         val mediaSource = HlsMediaSource.Factory(DefaultHttpDataSource.Factory())
             .createMediaSource(MediaItem.fromUri(source))
         ExoPlayer.Builder(context).build().apply {
+            trackSelectionParameters = trackSelectionParameters.buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !subtitlesEnabled)
+                .setPreferredTextLanguage("fr")
+                .build()
             setMediaSource(mediaSource)
             prepare()
             playWhenReady = true
@@ -376,11 +442,23 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     var position by remember(player) { mutableStateOf(0L) }
     LaunchedEffect(player) { while (true) { position = player.currentPosition; delay(500) } }
     val duration = player.duration.coerceAtLeast(0)
+    fun setSubtitles(enabled: Boolean) {
+        if (!subtitlesAvailable) return
+        subtitlesEnabled = enabled
+        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !enabled)
+            .setPreferredTextLanguage("fr")
+            .build()
+    }
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                 playbackError = "Lecture impossible : ${error.errorCodeName}"
+            }
+            override fun onTracksChanged(tracks: androidx.media3.common.Tracks) {
+                subtitlesAvailable = tracks.groups.any { it.type == C.TRACK_TYPE_TEXT }
+                if (subtitlesAvailable && stream.title.contains("VOSTFR", ignoreCase = true)) setSubtitles(true)
             }
         }
         player.addListener(listener)
@@ -392,7 +470,7 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
         controlsVisible = false
     }
 
-    var speedBadgeVisible by remember(speedBadgeTime) { mutableStateOf(true) }
+    var speedBadgeVisible by remember(source) { mutableStateOf(false) }
     LaunchedEffect(speedBadgeTime) {
         if (speedBadgeTime > 0) { speedBadgeVisible = true; delay(1500); speedBadgeVisible = false }
     }
@@ -408,6 +486,7 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
                     Key.DirectionCenter, Key.Enter -> { if (player.isPlaying) player.pause() else player.play(); true }
                     Key.DirectionRight -> { player.seekTo((player.currentPosition + 10_000).coerceAtMost(duration)); true }
                     Key.DirectionLeft -> { player.seekTo((player.currentPosition - 10_000).coerceAtLeast(0)); true }
+                    Key.One -> { setSubtitles(!subtitlesEnabled); true }
                     Key.DirectionUp -> { speed = ((speed + 0.1f).coerceAtMost(3.0f) * 10).toInt() / 10f; player.playbackParameters = PlaybackParameters(speed); speedBadgeTime = System.currentTimeMillis(); true }
                     Key.DirectionDown -> { speed = ((speed - 0.1f).coerceAtLeast(0.5f) * 10).toInt() / 10f; player.playbackParameters = PlaybackParameters(speed); speedBadgeTime = System.currentTimeMillis(); true }
                     Key.MediaPlay -> { player.play(); true }
@@ -442,7 +521,7 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
                     Box(Modifier.fillMaxWidth(progress).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(Color(0xFFF0C44E)))
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("◀◀ -10s    ⬆⬇ Vitesse    OK: Lecture/Pause    ▶▶ +10s    Retour: Quitter", color = Color.Gray, fontSize = 13.sp)
+                Text("1: ${if (subtitlesAvailable) "CC ${if (subtitlesEnabled) "ON" else "OFF"}" else "CC indisponibles"}    ⬆⬇ Vitesse    OK: Lecture/Pause    Retour: Quitter", color = Color.Gray, fontSize = 13.sp)
             }
         }
 
@@ -472,6 +551,10 @@ private fun AsyncImage(url: String, description: String, modifier: Modifier = Mo
 
 private object Api {
     fun baseTitle(t: String): String = t.replace(Regex("\\s*-\\s*Saison\\s*\\d+.*$", RegexOption.IGNORE_CASE), "").trim()
+
+    suspend fun featured(): Home = JSONObject(get("?api=featured")).let {
+        Home(it.array("films", "film"), it.array("series", "tv"), emptyList())
+    }
 
     suspend fun kids(): Home = JSONObject(get("?api=kids")).let {
         Home(it.array("films", "film"), it.array("series", "tv"), it.array("animes", "tv"))
@@ -506,7 +589,7 @@ private object Api {
         val suffix = if (type == "tv") "&t=tv&s=$season&e=$episode" else "&t=film"
         return JSONObject(get("?api=streams&id=$id$suffix&source=$source")).getJSONArray("streams").let { array ->
             List(array.length()) { index ->
-                array.getJSONObject(index).let { Stream(it.getString("title"), it.getString("url")) }
+                array.getJSONObject(index).let { Stream(it.getString("title"), it.getString("url"), it.optBoolean("embed", false)) }
             }
         }
     }

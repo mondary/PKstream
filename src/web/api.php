@@ -256,8 +256,8 @@ if (isset($_GET['api'])) {
             foreach (['vf' => ' VF', 'vostfr' => ' VOSTFR'] as $ver => $label) {
                 $ep = $data[$ver][$e] ?? null;
                 if (!$ep) continue;
-                if (!empty($ep['vidzy'])) $streams[] = ['title' => "E{$e} - Vidzy{$label}", 'url' => strpos($ep['vidzy'], 'http') === 0 ? $ep['vidzy'] : 'https://vidzy.live/embed-' . $ep['vidzy'] . '.html'];
-                if (!empty($ep['luluvid'])) $streams[] = ['title' => "E{$e} - LuluVid{$label}", 'url' => $ep['luluvid']];
+                if (!empty($ep['vidzy'])) $streams[] = ['title' => "E{$e} - Vidzy{$label}", 'url' => strpos($ep['vidzy'], 'http') === 0 ? $ep['vidzy'] : 'https://vidzy.live/embed-' . $ep['vidzy'] . '.html', 'embed' => true];
+                if (!empty($ep['luluvid'])) $streams[] = ['title' => "E{$e} - LuluVid{$label}", 'url' => $ep['luluvid'], 'embed' => true];
             }
             echo json_encode(['streams' => $streams]);
         } elseif ($t === 'tv') {
@@ -284,7 +284,7 @@ if (isset($_GET['api'])) {
                 $pd = $data['players'][$pn] ?? [];
                 foreach (['default', 'vostfr', 'vfq', 'vff'] as $vk) {
                     $u = $pd[$vk] ?? $pd['default'] ?? '';
-                    if ($u) $streams[] = ['title' => ucfirst($pn) . ($vl[$vk] ?? ''), 'url' => $u];
+                    if ($u) $streams[] = ['title' => ucfirst($pn) . ($vl[$vk] ?? ''), 'url' => $u, 'embed' => true];
                 }
             }
             echo json_encode(['streams' => $streams]);

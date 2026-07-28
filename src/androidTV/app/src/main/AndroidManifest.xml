@@ -3,10 +3,10 @@
 
     <application
         android:allowBackup="false"
-        android:banner="@drawable/tv_banner"
-        android:icon="@drawable/pk_stream_icon"
-        android:roundIcon="@drawable/pk_stream_icon"
-        android:label="PK Stream Kids"
+        android:banner="@drawable/${appBanner}"
+        android:icon="@drawable/${appIcon}"
+        android:roundIcon="@drawable/${appIcon}"
+        android:label="${appLabel}"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <activity

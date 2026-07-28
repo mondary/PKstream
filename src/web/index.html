@@ -19,6 +19,7 @@ img{display:block;max-width:100%}
 .nav.scrolled{background:rgba(7,7,7,.3);backdrop-filter:blur(20px);border-bottom-color:#ffffff08}
 .brand{font-weight:900;letter-spacing:-.06em;font-size:22px;flex-shrink:0}
 .brand b{color:var(--accent)}
+.app-version{color:#8a8a8a;font-size:10px;font-weight:800;letter-spacing:.02em;margin-left:-10px;white-space:nowrap}
 .nav-search{flex:1;display:flex;justify-content:center;max-width:520px;margin:0 auto}
 .nav-search input{width:100%;background:#181818;border:1px solid #444;border-radius:999px;color:#fff;font-size:16px;padding:12px 24px;outline:none;transition:border-color 200ms,box-shadow 200ms}
 .nav-search input:focus{border-color:var(--accent);box-shadow:0 0 0 2px #f0c44e30}
@@ -112,6 +113,8 @@ img{display:block;max-width:100%}
 .player-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
 .player-bar span{font-weight:700;font-size:14px}
 .player-close{background:#ffffff20;border-radius:8px;padding:8px 14px;font-size:14px}
+.player-cc{display:none;background:#ffd84d;color:#102541;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:800}
+.player-cc.visible{display:block}
 .player-frame{width:100%;aspect-ratio:16/9;border:0;background:#000}
 
 /* ── KIDS IDENTITY ── */
@@ -179,6 +182,7 @@ body.kids .search-view{background:var(--bg)}
 
 <nav class="nav" id="nav">
   <div class="brand" onclick="goHome()" style="cursor:pointer">PK <b>STREAM</b></div>
+  <span class="app-version" id="app-version">v2026.08.42</span>
   <div class="nav-search">
     <input id="search-input" type="search" placeholder="Rechercher un film ou une série…" autocomplete="off">
   </div>
@@ -254,7 +258,10 @@ body.kids .search-view{background:var(--bg)}
   <div class="player-box">
     <div class="player-bar">
       <span id="player-title"></span>
-      <button class="player-close" onclick="closePlayer()">Fermer</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="player-cc" id="player-cc" onclick="toggleSubtitles()">CC Sous-titres</button>
+        <button class="player-close" onclick="closePlayer()">Fermer</button>
+      </div>
     </div>
     <iframe class="player-frame" id="player-frame" allow="autoplay; fullscreen; encrypted-media"></iframe>
   </div>
@@ -271,6 +278,7 @@ if(KIDS){
   document.body.classList.add('kids');
   document.title='PK Stream Kids';
   document.querySelector('.brand').innerHTML='PK <b>KIDS</b>';
+  $('app-version').textContent='v2026.08.42-kids';
   $('search-input').placeholder='Rechercher dans PK Kids…';
   $('animes-section').style.display='block';
   document.querySelector('.kicker').textContent='PK Kids - À la une';
@@ -504,10 +512,15 @@ function playSource(i){
   const s=detailStreams[i];
   $('player-title').textContent=`${currentItem.title} — ${s.title}`;
   $('player-frame').src=s.url;
+  $('player-cc').classList.toggle('visible',currentItem.source==='anime'||/VOSTFR/i.test(s.title));
   $('player-overlay').classList.add('open');
 }
+function toggleSubtitles(){
+  const frame=$('player-frame');
+  if(frame.contentWindow)frame.contentWindow.postMessage({action:'toggleSubtitles'},'*');
+}
 function closeDetail(){$('detail-overlay').classList.remove('open');}
-function closePlayer(){$('player-frame').src='';$('player-overlay').classList.remove('open');}
+function closePlayer(){$('player-frame').src='';$('player-cc').classList.remove('visible');$('player-overlay').classList.remove('open');}
 
 /* ── NAV ── */
 window.addEventListener('scroll',()=>$('nav').classList.toggle('scrolled',scrollY>40));
@@ -542,6 +555,7 @@ document.addEventListener('keydown',e=>{
   const el=document.activeElement;
   const isInput=el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.isContentEditable);
   if(isInput)return;
+  if((e.key==='c'||e.key==='C')&&$('player-overlay').classList.contains('open')){e.preventDefault();toggleSubtitles();return;}
 
   const rails=kbRails();
   if(!rails.length)return;

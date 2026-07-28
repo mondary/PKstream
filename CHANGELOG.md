@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.27`
+Statut : `2026.08.42`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,38 @@ Statut : `1.2026.27`
 ---
 
 ## Releases
+
+### [2026.08.42] - 2026-07-28
+#### Fixed
+- Sources VOSTFR Android TV ouvertes dans leur lecteur web d'origine pour conserver les sous-titres fournis par Vidzy.
+
+### [2026.08.41] - 2026-07-28
+#### Fixed
+- Variante Android TV adulte restaurée avec l'icône et la bannière de la dernière APK normale fonctionnelle.
+
+### [2026.08.40] - 2026-07-28
+#### Fixed
+- Vitesse de lecture Android TV restaurée sur les touches haut et bas.
+
+### [2026.08.39] - 2026-07-28
+#### Fixed
+- Commandes Android TV déplacées sur les touches 1, 2 et 3; disponibilité réelle des sous-titres indiquée.
+
+### [2026.08.38] - 2026-07-28
+#### Fixed
+- Variante Android TV adulte restaurée avec l'icône `icon.png` du projet.
+
+### [2026.08.37] - 2026-07-28
+#### Fixed
+- Champ de recherche Android TV rendu lisible sur les fonds sombre et Kids.
+
+### [2026.08.36] - 2026-07-28
+#### Added
+- Variantes Android TV distinctes pour PK Stream et PK Stream Kids.
+- Recherche, affichage de version et bascule des sous-titres avec la touche C dans les APK.
+
+#### Changed
+- Convention de version migrée vers `YYYY.MM.PATCH`.
 
 ### [1.2026.27] - 2026-07-28
 #### Changed
