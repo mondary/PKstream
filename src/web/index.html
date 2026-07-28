@@ -114,6 +114,47 @@ img{display:block;max-width:100%}
 .player-close{background:#ffffff20;border-radius:8px;padding:8px 14px;font-size:14px}
 .player-frame{width:100%;aspect-ratio:16/9;border:0;background:#000}
 
+/* ── KIDS IDENTITY ── */
+body.kids{--bg:#07182c;--panel:#102a47;--card:#143456;--soft:#b5cae0;--ink:#f8fbff;--accent:#ffd84d;--line:#ffffff29;background:radial-gradient(circle at 82% -10%,#1b72b7 0,transparent 34%),var(--bg)}
+body.kids .nav{background:#07182ce8;border-bottom-color:#ffffff16}
+body.kids .nav.scrolled{background:#07182cf5;border-bottom-color:#ffffff29}
+body.kids .brand{font-size:25px;color:#fff}
+body.kids .brand b{color:var(--accent)}
+body.kids .nav-search input{background:#123153;border-color:#ffffff3b;border-radius:14px;color:#fff}
+body.kids .nav-search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #ffd84d38}
+body.kids .avatar{background:var(--accent);color:#102541;border-radius:11px}
+body.kids .hero{min-height:min(75dvh,700px)}
+body.kids .hero-bg{background-position:center 18%;opacity:.56}
+body.kids .hero-bg:after{background:linear-gradient(90deg,#07182cf5 0%,#07182cd7 43%,#07182c1c 80%),linear-gradient(0deg,var(--bg) 1%,transparent 43%)}
+body.kids .kicker{display:inline-block;padding:7px 12px;border-radius:999px;background:var(--accent);color:#102541;font-size:11px;letter-spacing:.1em}
+body.kids .hero h1{letter-spacing:-.075em}
+body.kids .hero p{color:#e2f0ff}
+body.kids .btn-play{background:var(--accent);color:#102541;border-radius:12px;box-shadow:0 5px 0 #bd9417}
+body.kids .btn-play:hover{background:#ffe47a}
+body.kids .btn-info{background:#38c8ff26;border:1px solid #38c8ff70;color:#dff7ff;border-radius:12px}
+body.kids .rails{margin-top:-48px}
+body.kids .section-head h2{font-size:23px}
+body.kids .section-head small{color:#9edfff}
+body.kids .rail{gap:16px;scrollbar-color:#38c8ff80 transparent}
+body.kids .poster{border-radius:16px;border:2px solid #ffffff12;background:#143456;box-shadow:0 8px 22px #0003}
+body.kids .card:hover .poster,body.kids .card.kb-focus .poster{transform:translateY(-6px) rotate(-1deg);outline:0;border-color:var(--accent);box-shadow:0 15px 28px #0006}
+body.kids .card.kb-focus .poster{box-shadow:0 0 0 4px #38c8ffb0,0 15px 28px #0006}
+body.kids .card-title{font-weight:800}
+body.kids .detail-overlay{background:var(--bg)}
+body.kids .detail-close{background:#07182ce8;border:1px solid #ffffff26}
+body.kids .detail-hero-bg:after{background:linear-gradient(90deg,#07182c 0%,#07182cf2 31%,#07182cb6 51%,transparent 85%),linear-gradient(0deg,var(--bg) 1%,transparent 42%)}
+body.kids .detail-kicker,body.kids .episode-kicker{color:var(--accent)}
+body.kids .badge-vf{background:var(--accent);color:#102541}
+body.kids .badge-vost{background:#38c8ff29;color:#bfefff;border-color:#38c8ff70}
+body.kids .season-tab{background:#102a47;border-color:#ffffff29;color:#d7e8fa}
+body.kids .season-tab.active{background:var(--accent);border-color:var(--accent);color:#102541}
+body.kids .episode-card{background:#102a47;border-color:#ffffff29}
+body.kids .episode-card:hover{border-color:var(--accent)}
+body.kids .source-btn{background:#102a47;border-color:#ffffff29}
+body.kids .source-btn:hover{background:#173b62;border-color:var(--accent)}
+body.kids .source-btn .dot{background:var(--accent)}
+body.kids .search-view{background:var(--bg)}
+
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   .search-grid{grid-template-columns:repeat(4,1fr)}
@@ -170,6 +211,10 @@ img{display:block;max-width:100%}
     <div class="section-head"><h2>Dernières séries</h2><small>Ajoutées récemment</small></div>
     <div class="rail" id="rail-series"><div class="search-hint">Chargement…</div></div>
   </section>
+  <section class="section" id="animes-section" style="display:none">
+    <div class="section-head"><h2>Animés</h2><small>Ajoutés récemment</small></div>
+    <div class="rail" id="rail-animes"><div class="search-hint">Chargement…</div></div>
+  </section>
 </div>
 
 <!-- SEARCH RESULTS (inline, replaces home when searching) -->
@@ -217,9 +262,21 @@ img{display:block;max-width:100%}
 
 <script>
 const API='api.php';
+const KIDS=new URLSearchParams(location.search).has('kids')||location.pathname.endsWith('/kids.html');
 const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>document.getElementById(id);
 let homeData=null,currentItem=null,currentType='film',detailStreams=[];
+
+if(KIDS){
+  document.body.classList.add('kids');
+  document.title='PK Stream Kids';
+  document.querySelector('.brand').innerHTML='PK <b>KIDS</b>';
+  $('search-input').placeholder='Rechercher dans PK Kids…';
+  $('animes-section').style.display='block';
+  document.querySelector('.kicker').textContent='PK Kids - À la une';
+  document.querySelector('#rail-films').closest('.section').querySelector('h2').textContent='Films animation';
+  document.querySelector('#rail-series').closest('.section').querySelector('h2').textContent='Séries animation';
+}
 
 /* ── HOME ── */
 let heroSlides=[],heroIdx=0,heroTimer=null;
@@ -239,7 +296,7 @@ function heroSlide(){
 }
 async function loadHome(){
   try{
-    const d=await fetch(`${API}?api=featured`).then(r=>r.json());
+    const d=await fetch(`${API}?api=${KIDS?'kids':'featured'}`).then(r=>r.json());
     homeData=d;
     heroSlides=(d.films||[]).slice(0,8);
     if(heroSlides.length){
@@ -247,17 +304,18 @@ async function loadHome(){
       heroSlide();
       heroTimer=setInterval(heroSlide,6000);
     }
-    renderRail(d.films||[],'rail-films','film');
-    renderRail(d.series||[],'rail-series','tv');
+    renderRail(d.films||[],'rail-films','film','films');
+    renderRail(d.series||[],'rail-series','tv','series');
+    if(KIDS)renderRail(d.animes||[],'rail-animes','tv','animes');
   }catch(e){
     $('hero-title').textContent='Erreur de chargement';
   }
 }
-function renderRail(items,id,type){
+function renderRail(items,id,type,key){
   const c=$(id);
   if(!items.length){c.innerHTML='<div class="search-hint">Aucun contenu.</div>';return;}
   c.innerHTML=items.map((it,i)=>
-    `<button class="card" onclick="openDetail(homeData.${id==='rail-films'?'films':'series'}[${i}],'${type}')">
+    `<button class="card" onclick="openDetail(homeData.${key}[${i}],'${type}')">
       <div class="poster"><img src="${esc(it.poster)}" alt="${esc(it.title)}" loading="lazy"></div>
       <div class="card-title">${esc(it.title)}</div>
     </button>`).join('');
@@ -292,6 +350,14 @@ async function doSearch(q){
   $('hero-section').style.display='none';
   $('rails').style.display='none';
   try{
+    if(KIDS){
+      const items=['films','series','animes'].flatMap(key=>homeData?.[key]||[]).filter(item=>item.title.toLocaleLowerCase('fr').includes(q.toLocaleLowerCase('fr')));
+      if(!items.length){$('search-results').innerHTML='<div class="search-hint">Aucun résultat pour « '+esc(q)+' »</div>';return;}
+      $('search-results').innerHTML=`<div class="search-grid">${items.map((it,i)=>
+        `<button class="card" type="button" data-search-index="${i}"><div class="poster"><img src="${esc(it.poster)}" alt="${esc(it.title)}" loading="lazy"></div><div class="card-title">${esc(it.title)}</div></button>`).join('')}</div>`;
+      $('search-results').querySelectorAll('[data-search-index]').forEach(card=>card.addEventListener('click',()=>{const item=items[Number(card.dataset.searchIndex)];openDetail(item,item.type||'tv');}));
+      return;
+    }
     const ctrl=new AbortController();
     lastSearchReq=ctrl;
     const d=await fetch(`${API}?api=search&q=${encodeURIComponent(q)}`,{signal:ctrl.signal}).then(r=>r.json());
@@ -337,11 +403,11 @@ async function openDetail(item,type){
 
   // Load details (backdrop, synopsis)
   try{
-    const d=await fetch(`${API}?api=details&id=${item.newsid}`).then(r=>r.json());
+    const d=await fetch(`${API}?api=details&id=${item.newsid}&source=${encodeURIComponent(item.source||'fs16')}`).then(r=>r.json());
     if(d.backdrop)$('detail-bg').style.backgroundImage=`url("${d.backdrop}")`;
     else if(item.poster)$('detail-bg').style.backgroundImage=`url("${item.poster}")`;
     $('detail-desc').textContent=d.description||'Aucune description disponible.';
-    const isSeries=titleMatchesSeries(item.title);
+    const isSeries=type==='tv';
     const badges=['<span class="badge badge-hd">HD</span>'];
     badges.push(isSeries?'<span class="badge badge-vf">Série</span>':'<span class="badge badge-vf">Film</span>');
     badges.push('<span class="badge badge-vost">VF et VOSTFR</span>');
@@ -360,11 +426,14 @@ async function loadSeriesEpisodes(){
   activeSeasonNid=currentItem.newsid;
   $('episode-rail').innerHTML='<div class="no-sources">Chargement...</div>';
   $('season-tabs').innerHTML='<div class="no-sources">...</div>';
-  const bt=baseTitle(currentItem.title);
-  try{
-    const sd=await fetch(`${API}?api=seasons&title=${encodeURIComponent(bt)}&id=${currentItem.newsid}`).then(r=>r.json());
-    allSeasons=sd.seasons||[];
-  }catch{allSeasons=[];}
+  if(currentItem.source==='anime')allSeasons=[];
+  else{
+    const bt=baseTitle(currentItem.title);
+    try{
+      const sd=await fetch(`${API}?api=seasons&title=${encodeURIComponent(bt)}&id=${currentItem.newsid}`).then(r=>r.json());
+      allSeasons=sd.seasons||[];
+    }catch{allSeasons=[];}
+  }
   if(!allSeasons.length)allSeasons=[{season:activeSeason,newsid:currentItem.newsid,title:currentItem.title}];
   renderSeasonTabs();
   await loadEpisodesForSeason(activeSeason);
@@ -385,7 +454,7 @@ function renderSeasonTabs(){
 async function loadEpisodesForSeason(season){
   $('episode-rail').innerHTML='<div class="no-sources">Chargement des episodes...</div>';
   try{
-    const data=await fetch(`${API}?api=episodes&id=${activeSeasonNid}`).then(r=>r.json());
+    const data=await fetch(`${API}?api=episodes&id=${activeSeasonNid}&source=${encodeURIComponent(currentItem.source||'fs16')}`).then(r=>r.json());
     const episodes=data.episodes||[];
     if(!episodes.length){$('episode-rail').innerHTML='<div class="no-sources">Aucun episode disponible.</div>';return;}
     $('episode-rail').innerHTML=episodes.map((episode,index)=>`<button class="episode-card" type="button" data-episode-index="${index}"><div class="episode-cover">${episode.poster?`<img src="${esc(episode.poster)}" alt="" loading="lazy">`:''}</div><div class="episode-copy"><div class="episode-kicker">S${season} E${episode.number}</div><div class="episode-title">${esc(episode.title)}</div><div class="episode-desc">${esc(episode.synopsis||'Selectionner pour choisir une source.')}</div></div></button>`).join('');
@@ -398,7 +467,7 @@ async function openEpisodeSources(episode){
   $('detail-sources').innerHTML='<div class="no-sources">Chargement des sources...</div>';
   $('detail-play').style.display='none';
   try{
-    const data=await fetch(`${API}?api=streams&id=${activeSeasonNid}&t=tv&s=${activeSeason}&e=${episode.number}`).then(r=>r.json());
+    const data=await fetch(`${API}?api=streams&id=${activeSeasonNid}&t=tv&s=${activeSeason}&e=${episode.number}&source=${encodeURIComponent(currentItem.source||'fs16')}`).then(r=>r.json());
     detailStreams=data.streams||[];
     if(!detailStreams.length){$('detail-sources').innerHTML='<div class="no-sources">Aucune source disponible pour cet episode.</div>';return;}
     $('detail-sources').innerHTML=detailStreams.map((s,i)=>`<button class="source-btn" type="button" onclick="playSource(${i})"><span class="dot"></span>${esc(s.title)}</button>`).join('');
@@ -413,9 +482,9 @@ async function loadDetailSources(){
     let url;
     if(currentType==='tv'){
       const s=$('ep-season').value||1,e=$('ep-episode').value||1;
-      url=`${API}?api=streams&id=${currentItem.newsid}&t=tv&s=${s}&e=${e}`;
+      url=`${API}?api=streams&id=${currentItem.newsid}&t=tv&s=${s}&e=${e}&source=${encodeURIComponent(currentItem.source||'fs16')}`;
     }else{
-      url=`${API}?api=streams&id=${currentItem.newsid}&t=film`;
+      url=`${API}?api=streams&id=${currentItem.newsid}&t=film&source=${encodeURIComponent(currentItem.source||'fs16')}`;
     }
     const d=await fetch(url).then(r=>r.json());
     detailStreams=d.streams||[];

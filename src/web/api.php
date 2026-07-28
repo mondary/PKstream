@@ -7,22 +7,59 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 
 $BASE = 'https://fs16.lol';
+$MANGA_BASE = 'https://w16.french-manga.net';
 $UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 function proxy_get($url) {
     global $BASE, $UA;
-    $ch = curl_init($BASE . $url);
+    return proxy_get_url($BASE . $url, $BASE);
+}
+
+function proxy_get_url($url, $referer = null) {
+    global $UA;
+    $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_USERAGENT => $UA,
-        CURLOPT_REFERER => $BASE . '/',
+        CURLOPT_REFERER => ($referer ?: $url),
         CURLOPT_TIMEOUT => 10,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_SSL_VERIFYPEER => false,
     ]);
-    $r = curl_exec($ch);
-    curl_close($ch);
-    return $r;
+    return curl_exec($ch);
+}
+
+function fs_items($path, $type, $source = 'fs16') {
+    $html = proxy_get($path);
+    preg_match_all('/href="\/index\.php\?newsid=(\d+)"[^>]*alt="([^"]*)"[^>]*>.*?<img[^>]+src="([^"]*)"/s', $html, $m);
+    $items = [];
+    for ($i = 0; $i < count($m[1]); $i++) {
+        $items[] = [
+            'newsid' => $m[1][$i],
+            'title' => trim(html_entity_decode($m[2][$i])),
+            'poster' => html_entity_decode($m[3][$i]),
+            'type' => $type,
+            'source' => $source,
+        ];
+    }
+    return array_slice($items, 0, 18);
+}
+
+function manga_items($path) {
+    global $MANGA_BASE;
+    $html = proxy_get_url($MANGA_BASE . $path, $MANGA_BASE . '/');
+    preg_match_all('/href="https?:\/\/[^\/]+\/index\.php\?newsid=(\d+)"[^>]*alt="([^"]*)"[^>]*>\s*<img[^>]+src="([^"]*)"/s', $html, $m);
+    $items = [];
+    for ($i = 0; $i < count($m[1]); $i++) {
+        $items[] = [
+            'newsid' => $m[1][$i],
+            'title' => trim(html_entity_decode($m[2][$i], ENT_QUOTES | ENT_HTML5, 'UTF-8')),
+            'poster' => html_entity_decode($m[3][$i], ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            'type' => 'tv',
+            'source' => 'anime',
+        ];
+    }
+    return array_slice($items, 0, 18);
 }
 
 function proxy_post($path, $body) {
@@ -39,9 +76,7 @@ function proxy_post($path, $body) {
         CURLOPT_POSTFIELDS => $body,
         CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
     ]);
-    $r = curl_exec($ch);
-    curl_close($ch);
-    return $r;
+    return curl_exec($ch);
 }
 
 // API endpoints
@@ -85,6 +120,15 @@ if (isset($_GET['api'])) {
         exit;
     }
 
+    if ($api === 'kids') {
+        echo json_encode([
+            'films' => fs_items('/films/animations/', 'film'),
+            'series' => fs_items('/animation-serie-//', 'tv'),
+            'animes' => manga_items('/manga-streaming-1/'),
+        ]);
+        exit;
+    }
+
     if ($api === 'search') {
         $q = $_GET['q'] ?? '';
         $body = 'do=search&subaction=search&story=' . urlencode($q);
@@ -109,6 +153,19 @@ if (isset($_GET['api'])) {
 
     if ($api === 'details') {
         $nid = $_GET['id'] ?? '';
+        $source = $_GET['source'] ?? 'fs16';
+        if ($source === 'anime') {
+            global $MANGA_BASE;
+            $html = proxy_get_url($MANGA_BASE . '/index.php?newsid=' . $nid, $MANGA_BASE . '/');
+            $poster = '';
+            $backdrop = '';
+            $desc = '';
+            if (preg_match('/data-affiche="([^"]*)"/s', $html, $pm)) $poster = html_entity_decode($pm[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if (preg_match('/class="hero-backdrop"[^>]*background-image:\s*url\(\'([^\']*)\'\)/s', $html, $bm)) $backdrop = html_entity_decode($bm[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            if (preg_match('/<div class="flist clearfix"><div class="fdesc"><p>(.*?)<\/p><\/div><\/div>/s', $html, $dm)) $desc = trim(html_entity_decode(strip_tags($dm[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            echo json_encode(['newsid' => $nid, 'backdrop' => $backdrop, 'poster' => $poster, 'description' => $desc, 'trailer' => '']);
+            exit;
+        }
         $filmData = json_decode(proxy_get('/engine/ajax/film_api.php?id=' . $nid), true);
         $html = proxy_get('/index.php?newsid=' . $nid);
 
@@ -137,7 +194,13 @@ if (isset($_GET['api'])) {
 
     if ($api === 'episodes') {
         $nid = $_GET['id'] ?? '';
-        $data = json_decode(proxy_get('/static/series/' . $nid . '.js'), true);
+        $source = $_GET['source'] ?? 'fs16';
+        if ($source === 'anime') {
+            global $MANGA_BASE;
+            $data = json_decode(proxy_get_url($MANGA_BASE . '/engine/ajax/manga_episodes_api.php?id=' . $nid, $MANGA_BASE . '/'), true);
+        } else {
+            $data = json_decode(proxy_get('/static/series/' . $nid . '.js'), true);
+        }
         $info = is_array($data) ? ($data['info'] ?? []) : [];
         $episodes = [];
         foreach ($info as $number => $episode) {
@@ -183,8 +246,21 @@ if (isset($_GET['api'])) {
     if ($api === 'streams') {
         $nid = $_GET['id'] ?? '';
         $t = $_GET['t'] ?? 'film';
+        $source = $_GET['source'] ?? 'fs16';
 
-        if ($t === 'tv') {
+        if ($source === 'anime') {
+            global $MANGA_BASE;
+            $e = $_GET['e'] ?? '1';
+            $data = json_decode(proxy_get_url($MANGA_BASE . '/engine/ajax/manga_episodes_api.php?id=' . $nid, $MANGA_BASE . '/'), true);
+            $streams = [];
+            foreach (['vf' => ' VF', 'vostfr' => ' VOSTFR'] as $ver => $label) {
+                $ep = $data[$ver][$e] ?? null;
+                if (!$ep) continue;
+                if (!empty($ep['vidzy'])) $streams[] = ['title' => "E{$e} - Vidzy{$label}", 'url' => strpos($ep['vidzy'], 'http') === 0 ? $ep['vidzy'] : 'https://vidzy.live/embed-' . $ep['vidzy'] . '.html'];
+                if (!empty($ep['luluvid'])) $streams[] = ['title' => "E{$e} - LuluVid{$label}", 'url' => $ep['luluvid']];
+            }
+            echo json_encode(['streams' => $streams]);
+        } elseif ($t === 'tv') {
             $s = $_GET['s'] ?? '1';
             $e = $_GET['e'] ?? '1';
             $data = json_decode(proxy_get('/static/series/' . $nid . '.js'), true);

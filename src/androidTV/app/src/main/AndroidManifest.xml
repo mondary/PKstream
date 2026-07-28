@@ -6,7 +6,7 @@
         android:banner="@drawable/tv_banner"
         android:icon="@drawable/pk_stream_icon"
         android:roundIcon="@drawable/pk_stream_icon"
-        android:label="PK Stream"
+        android:label="PK Stream Kids"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <activity

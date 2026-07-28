@@ -85,6 +85,9 @@ import java.net.URLEncoder
 
 private const val API = "https://mondary.design/pk/stream/api.php"
 private const val PROXY = "https://mondary.design/pk/stream/stremio/proxy.php?embed="
+private val KidsBackground = Color(0xFF07182C)
+private val KidsSurface = Color(0xFF102A47)
+private val KidsYellow = Color(0xFFFFD84D)
 
 data class Content(
     val newsid: String,
@@ -92,8 +95,9 @@ data class Content(
     val poster: String,
     val type: String = "film",
     val backdrop: String = "",
+    val source: String = "fs16",
 )
-data class Home(val films: List<Content>, val series: List<Content>)
+data class Home(val films: List<Content>, val series: List<Content>, val animes: List<Content>)
 data class Stream(val title: String, val url: String)
 data class Season(val season: Int, val newsid: String, val title: String)
 data class Episode(val number: Int, val title: String, val synopsis: String, val poster: String)
@@ -109,7 +113,7 @@ class MainActivity : ComponentActivity() {
 private fun PKStreamApp() {
     var selected by remember { mutableStateOf<Content?>(null) }
     var playerStream by remember { mutableStateOf<Stream?>(null) }
-    MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(background = Color(0xFF070707), surface = Color(0xFF181818), primary = Color(0xFFF0C44E))) {
+    MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(background = KidsBackground, surface = KidsSurface, primary = KidsYellow)) {
         when {
             playerStream != null -> PlayerScreen(playerStream!!, onBack = { playerStream = null })
             selected != null -> DetailsScreen(selected!!, onBack = { selected = null }, onPlay = { playerStream = it })
@@ -120,19 +124,15 @@ private fun PKStreamApp() {
 
 @Composable
 private fun HomeScreen(onSelect: (Content) -> Unit) {
-    val home by produceState<Home?>(initialValue = null) { value = runCatching { Api.featured() }.getOrNull() }
-    var query by remember { mutableStateOf("") }
+    val home by produceState<Home?>(initialValue = null) { value = runCatching { Api.kids() }.getOrNull() }
     val firstCardFocus = remember { FocusRequester() }
-    val search by produceState<List<Content>>(initialValue = emptyList(), query) {
-        value = if (query.length < 3) emptyList() else runCatching { Api.search(query) }.getOrDefault(emptyList())
-    }
     LaunchedEffect(home?.films) {
         if (home?.films?.isNotEmpty() == true) {
             try { firstCardFocus.requestFocus() } catch (_: Exception) {}
         }
     }
     Column(
-        Modifier.fillMaxSize().background(Color(0xFF070707)).padding(vertical = 28.dp)
+        Modifier.fillMaxSize().background(KidsBackground).padding(vertical = 28.dp)
             .verticalScroll(rememberScrollState())
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 48.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -144,17 +144,18 @@ private fun HomeScreen(onSelect: (Content) -> Unit) {
             )
             Spacer(Modifier.width(16.dp))
             Text("PK ", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black)
-            Text("STREAM", color = Color(0xFFF0C44E), fontSize = 30.sp, fontWeight = FontWeight.Black)
+            Text("KIDS", color = Color(0xFFF0C44E), fontSize = 30.sp, fontWeight = FontWeight.Black)
             Spacer(Modifier.weight(1f))
-            OutlinedTextField(query, { query = it }, label = { Text("Rechercher") }, singleLine = true, modifier = Modifier.width(440.dp))
+            Text("Films animation · Séries animation · Animés", color = Color(0xFFCAE4FA), fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(26.dp))
-        if (query.length >= 3) ContentRow("Résultats", search, onSelect, null)
-        else if (home == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Chargement…", color = Color.LightGray) }
+        if (home == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Chargement…", color = Color.LightGray) }
         else {
-            ContentRow("Derniers films", home!!.films, onSelect, firstCardFocus)
+            ContentRow("Films animation", home!!.films, onSelect, firstCardFocus)
             Spacer(Modifier.height(28.dp))
-            ContentRow("Dernières séries", home!!.series, onSelect, null)
+            ContentRow("Séries animation", home!!.series, onSelect, null)
+            Spacer(Modifier.height(28.dp))
+            ContentRow("Animés", home!!.animes, onSelect, null)
         }
     }
 }
@@ -201,14 +202,14 @@ private fun DetailsScreen(content: Content, onBack: () -> Unit, onPlay: (Stream)
 @Composable
 private fun FilmScreen(content: Content, onBack: () -> Unit, onPlay: (Stream) -> Unit) {
     val streams by produceState<List<Stream>>(initialValue = emptyList(), content.newsid) {
-        value = runCatching { Api.streams(content.newsid, "film") }.getOrDefault(emptyList())
+        value = runCatching { Api.streams(content.newsid, "film", source = content.source) }.getOrDefault(emptyList())
     }
     val details by produceState<JSONObject?>(null, content.newsid) {
-        value = runCatching { Api.details(content.newsid) }.getOrNull()
+        value = runCatching { Api.details(content.newsid, content.source) }.getOrNull()
     }
     val backdrop = details?.optString("backdrop") ?: ""
     val desc = details?.optString("description") ?: ""
-    Box(Modifier.fillMaxSize().background(Color(0xFF070707))) {
+    Box(Modifier.fillMaxSize().background(KidsBackground)) {
         if (backdrop.isNotEmpty()) AsyncImage(backdrop, "", Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Color(0xDD070707)))
         Row(Modifier.fillMaxSize().padding(horizontal = 64.dp, vertical = 48.dp)) {
@@ -243,20 +244,20 @@ private fun SeriesScreen(content: Content, onBack: () -> Unit, onPlay: (Stream) 
     var selectedEpisode by remember { mutableStateOf<Episode?>(null) }
 
     val seasons by produceState<List<Season>>(emptyList(), content.newsid) {
-        value = runCatching { Api.seasons(Api.baseTitle(content.title), content.newsid) }.getOrDefault(emptyList())
+        value = if (content.source == "anime") emptyList() else runCatching { Api.seasons(Api.baseTitle(content.title), content.newsid) }.getOrDefault(emptyList())
     }
 
     if (selectedEpisode != null) {
         EpisodeSourcesScreen(content.title, activeSeason, selectedEpisode!!, activeSeasonNid,
-            onBack = { selectedEpisode = null }, onPlay = onPlay)
+            source = content.source, onBack = { selectedEpisode = null }, onPlay = onPlay)
         return
     }
 
     val episodes by produceState<List<Episode>>(emptyList(), activeSeasonNid) {
-        value = runCatching { Api.episodes(activeSeasonNid) }.getOrDefault(emptyList())
+        value = runCatching { Api.episodes(activeSeasonNid, content.source) }.getOrDefault(emptyList())
     }
 
-    Column(Modifier.fillMaxSize().background(Color(0xFF070707)).padding(48.dp).verticalScroll(rememberScrollState())) {
+    Column(Modifier.fillMaxSize().background(KidsBackground).padding(48.dp).verticalScroll(rememberScrollState())) {
         Text(content.title, color = Color.White, fontSize = 40.sp, lineHeight = 48.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(24.dp))
 
@@ -323,12 +324,12 @@ private fun EpisodeCard(episode: Episode, season: Int, onClick: (Episode) -> Uni
 }
 
 @Composable
-private fun EpisodeSourcesScreen(seriesTitle: String, season: Int, episode: Episode, seasonNid: String, onBack: () -> Unit, onPlay: (Stream) -> Unit) {
+private fun EpisodeSourcesScreen(seriesTitle: String, season: Int, episode: Episode, seasonNid: String, source: String, onBack: () -> Unit, onPlay: (Stream) -> Unit) {
     BackHandler(onBack = onBack)
     val streams by produceState<List<Stream>>(emptyList(), episode.number) {
-        value = runCatching { Api.streams(seasonNid, "tv", season, episode.number) }.getOrDefault(emptyList())
+        value = runCatching { Api.streams(seasonNid, "tv", season, episode.number, source) }.getOrDefault(emptyList())
     }
-    Row(Modifier.fillMaxSize().background(Color(0xFF070707)).padding(56.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxSize().background(KidsBackground).padding(56.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.fillMaxHeight().padding(vertical = 42.dp), verticalArrangement = Arrangement.Center) {
             Text(seriesTitle, color = Color.White, fontSize = 36.sp, lineHeight = 44.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text("S${season} E${episode.number} - ${episode.title}", color = Color(0xFFF0C44E), fontSize = 20.sp)
@@ -472,14 +473,14 @@ private fun AsyncImage(url: String, description: String, modifier: Modifier = Mo
 private object Api {
     fun baseTitle(t: String): String = t.replace(Regex("\\s*-\\s*Saison\\s*\\d+.*$", RegexOption.IGNORE_CASE), "").trim()
 
-    suspend fun featured(): Home = JSONObject(get("?api=featured")).let {
-        Home(it.array("films", "film"), it.array("series", "tv"))
+    suspend fun kids(): Home = JSONObject(get("?api=kids")).let {
+        Home(it.array("films", "film"), it.array("series", "tv"), it.array("animes", "tv"))
     }
 
     suspend fun search(q: String): List<Content> =
         JSONObject(get("?api=search&q=${URLEncoder.encode(q, "UTF-8")}")).array("results", null)
 
-    suspend fun details(id: String): JSONObject = JSONObject(get("?api=details&id=$id"))
+    suspend fun details(id: String, source: String): JSONObject = JSONObject(get("?api=details&id=$id&source=$source"))
 
     suspend fun seasons(title: String, id: String): List<Season> {
         val json = JSONObject(get("?api=seasons&title=${URLEncoder.encode(title, "UTF-8")}&id=$id"))
@@ -490,8 +491,8 @@ private object Api {
         }
     }
 
-    suspend fun episodes(nid: String): List<Episode> {
-        val json = JSONObject(get("?api=episodes&id=$nid"))
+    suspend fun episodes(nid: String, source: String): List<Episode> {
+        val json = JSONObject(get("?api=episodes&id=$nid&source=$source"))
         return json.getJSONArray("episodes").let { arr ->
             List(arr.length()) { i ->
                 arr.getJSONObject(i).let {
@@ -501,9 +502,9 @@ private object Api {
         }
     }
 
-    suspend fun streams(id: String, type: String, season: Int = 1, episode: Int = 1): List<Stream> {
+    suspend fun streams(id: String, type: String, season: Int = 1, episode: Int = 1, source: String = "fs16"): List<Stream> {
         val suffix = if (type == "tv") "&t=tv&s=$season&e=$episode" else "&t=film"
-        return JSONObject(get("?api=streams&id=$id$suffix")).getJSONArray("streams").let { array ->
+        return JSONObject(get("?api=streams&id=$id$suffix&source=$source")).getJSONArray("streams").let { array ->
             List(array.length()) { index ->
                 array.getJSONObject(index).let { Stream(it.getString("title"), it.getString("url")) }
             }
@@ -514,7 +515,7 @@ private object Api {
         List(array.length()) { index ->
             array.getJSONObject(index).let {
                 val contentType = type ?: if (it.getString("title").contains("Saison", ignoreCase = true)) "tv" else "film"
-                Content(it.getString("newsid"), it.getString("title"), it.getString("poster"), contentType, it.optString("backdrop"))
+                Content(it.getString("newsid"), it.getString("title"), it.getString("poster"), contentType, it.optString("backdrop"), it.optString("source", "fs16"))
             }
         }
     }

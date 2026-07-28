@@ -6,15 +6,15 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val appVersionCode = 11
-val appVersionName = "1.2026.27"
+val appVersionCode = 12
+val appVersionName = "1.2026.29-kids"
 
 android {
     namespace = "design.mondary.pkstream"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "design.mondary.pkstream"
+        applicationId = "design.mondary.pkstream.kids"
         minSdk = 23
         targetSdk = 35
         versionCode = appVersionCode
@@ -34,7 +34,7 @@ kotlin { jvmToolchain(17) }
 androidComponents {
     onVariants(selector().all()) { variant ->
         variant.outputs.forEach { output ->
-            (output as VariantOutputImpl).outputFileName.set("PK-Stream-TV-$appVersionName.apk")
+            (output as VariantOutputImpl).outputFileName.set("PK-Stream-Kids-TV-$appVersionName.apk")
         }
     }
 }
