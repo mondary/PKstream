@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.16`
+Statut : `1.2026.17`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,11 @@ Statut : `1.2026.16`
 ---
 
 ## Releases
+
+### [1.2026.17] - 2026-07-28
+#### Fixed
+- Lecteur Android TV : ajout du module Media3 HLS et création explicite des sources `.m3u8` du proxy.
+- Erreur de lecture affichée à l'écran au lieu d'un lecteur silencieux.
 
 ### [1.2026.16] - 2026-07-28
 #### Fixed

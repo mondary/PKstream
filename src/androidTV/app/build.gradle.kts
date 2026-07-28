@@ -13,7 +13,7 @@ android {
         minSdk = 23
         targetSdk = 35
         versionCode = 1
-        versionName = "1.2026.16"
+        versionName = "1.2026.17"
     }
 
     buildFeatures { compose = true; buildConfig = true }
@@ -35,6 +35,7 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
     implementation(libs.media3.exoplayer)
+    implementation(libs.media3.hls)
     implementation(libs.media3.ui)
     debugImplementation(libs.compose.ui.tooling)
 }

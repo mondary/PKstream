@@ -55,7 +55,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -172,10 +175,31 @@ private fun DetailsScreen(content: Content, onBack: () -> Unit, onPlay: (Stream)
 private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val source = remember(stream.url) { PROXY + URLEncoder.encode(Base64.encodeToString(stream.url.toByteArray(), Base64.NO_WRAP), "UTF-8") }
-    val player = remember(source) { ExoPlayer.Builder(context).build().apply { setMediaItem(MediaItem.fromUri(source)); prepare(); playWhenReady = true } }
-    DisposableEffect(player) { onDispose { player.release() } }
+    var playbackError by remember(source) { mutableStateOf<String?>(null) }
+    val player = remember(source) {
+        val mediaSource = HlsMediaSource.Factory(DefaultHttpDataSource.Factory())
+            .createMediaSource(MediaItem.fromUri(source))
+        ExoPlayer.Builder(context).build().apply {
+            setMediaSource(mediaSource)
+            prepare()
+            playWhenReady = true
+        }
+    }
+    DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
+                playbackError = "Lecture impossible : ${error.errorCodeName}"
+            }
+        }
+        player.addListener(listener)
+        onDispose {
+            player.removeListener(listener)
+            player.release()
+        }
+    }
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         AndroidView(factory = { PlayerView(it).apply { this.player = player; layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) } }, modifier = Modifier.fillMaxSize())
+        playbackError?.let { Text(it, color = Color.White, modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).background(Color(0xCC7A1E1E), RoundedCornerShape(8.dp)).padding(14.dp)) }
         Button(onClick = onBack, modifier = Modifier.align(Alignment.TopEnd).padding(24.dp)) { Text("Retour") }
     }
 }
