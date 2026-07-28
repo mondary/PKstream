@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.4`
+Statut : `1.2026.5`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -21,6 +21,11 @@ Statut : `1.2026.4`
 ---
 
 ## Releases
+
+### [1.2026.5] - 2026-07-28
+#### Fixed
+- Recherche cassée : suppression du retry automatique et du keydown global qui interféraient avec la saisie.
+- Retour à un comportement simple : saisie dans le champ → recherche debounce 250ms + touche Entrée pour forcer.
 
 ### [1.2026.4] - 2026-07-28
 #### Changed
