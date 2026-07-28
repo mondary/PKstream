@@ -247,19 +247,42 @@ function renderRail(items,id,type){
 }
 
 /* ── SEARCH (live, inline) ── */
-let searchTimer,lastSearchReq;
+let searchTimer,lastSearchReq,searchRetryInterval,lastQuery='';
+function stopSearchRetry(){clearInterval(searchRetryInterval);searchRetryInterval=null;}
+function startSearchRetry(q){
+  stopSearchRetry();
+  let attempts=0;
+  searchRetryInterval=setInterval(()=>{
+    attempts++;
+    if(attempts>6){stopSearchRetry();return;}
+    const cur=$('search-input').value.trim();
+    if(!cur||!$('search-view').classList.contains('open')){stopSearchRetry();return;}
+    triggerSearch(cur);
+  },10000);
+}
 $('search-input').addEventListener('input',()=>{
   clearTimeout(searchTimer);
+  stopSearchRetry();
   const q=$('search-input').value.trim();
-  if(q.length<3){
+  if(q.length<1){
     $('search-view').classList.remove('open');
     $('hero-section').style.display='';
     $('rails').style.display='';
     $('search-results').innerHTML='';
+    lastQuery='';
     return;
   }
-  searchTimer=setTimeout(()=>doSearch(q),400);
+  searchTimer=setTimeout(()=>triggerSearch(q),250);
 });
+$('search-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    clearTimeout(searchTimer);
+    const q=$('search-input').value.trim();
+    if(q.length>=1)triggerSearch(q);
+  }
+});
+function triggerSearch(q){lastQuery=q;doSearch(q);}
 async function doSearch(q){
   if(lastSearchReq&&lastSearchReq.abort)lastSearchReq.abort();
   $('search-results').innerHTML='<div class="search-hint">Recherche…</div>';
@@ -271,7 +294,12 @@ async function doSearch(q){
     lastSearchReq=ctrl;
     const d=await fetch(`${API}?api=search&q=${encodeURIComponent(q)}`,{signal:ctrl.signal}).then(r=>r.json());
     const items=d.results||[];
-    if(!items.length){$('search-results').innerHTML='<div class="search-hint">Aucun résultat pour « '+esc(q)+' »</div>';return;}
+    if(!items.length){
+      $('search-results').innerHTML='<div class="search-hint">Recherche de « '+esc(q)+' »…</div>';
+      startSearchRetry(q);
+      return;
+    }
+    stopSearchRetry();
     $('search-results').innerHTML=`<div class="search-grid">${items.map((it,i)=>
       `<button class="card" type="button" data-search-index="${i}">
         <div class="poster"><img src="${esc(it.poster)}" alt="${esc(it.title)}" loading="lazy"></div>
@@ -284,10 +312,12 @@ async function doSearch(q){
       });
     });
   }catch(e){
-    $('search-results').innerHTML='<div class="search-hint">Erreur de recherche.</div>';
+    $('search-results').innerHTML='<div class="search-hint">Recherche de « '+esc(q)+' »…</div>';
+    startSearchRetry(q);
   }
 }
 function closeSearchView(){
+  stopSearchRetry();
   $('search-view').classList.remove('open');
   $('hero-section').style.display='';
   $('rails').style.display='';
@@ -419,7 +449,13 @@ window.addEventListener('scroll',()=>$('nav').classList.toggle('scrolled',scroll
 function goHome(){closeSearchView();closeDetail();scrollTo({top:0,behavior:'smooth'});}
 function goSeries(){closeSearchView();closeDetail();$('series-section').scrollIntoView({behavior:'smooth'});}
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closePlayer();closeDetail();closeSearchView();$('search-input').value='';$('search-input').blur();}
+  if(e.key==='Escape'){closePlayer();closeDetail();closeSearchView();$('search-input').value='';$('search-input').blur();return;}
+  const el=document.activeElement;
+  if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.isContentEditable))return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key.length===1||e.key==='Backspace'){
+    $('search-input').focus();
+  }
 });
 
 loadHome();
