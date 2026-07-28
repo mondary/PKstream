@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `2026.08.42`
+Statut : `2026.08.43`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,10 @@ Statut : `2026.08.42`
 ---
 
 ## Releases
+
+### [2026.08.43] - 2026-07-28
+#### Added
+- Les sources Vidzy VOSTFR Android TV chargent leur piste WebVTT française dans le lecteur Media3 natif.
 
 ### [2026.08.42] - 2026-07-28
 #### Fixed

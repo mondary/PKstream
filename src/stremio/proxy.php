@@ -52,6 +52,18 @@ function resolve_embed(string $embedUrl): ?array {
     return ['url' => $url, 'referer' => $origin . '/'];
 }
 
+function resolve_subtitle(string $embedUrl): ?array {
+    $html = http_get($embedUrl, $embedUrl);
+    if (!$html) return null;
+    $decoded = unpack_packer($html);
+    if (!$decoded) $decoded = $html;
+    if (!preg_match("~https?://[^\s\"']+\.vtt[^\s\"']*~i", $decoded, $m)) return null;
+    $url = html_entity_decode(str_replace('\\/', '/', $m[0]));
+    $url = preg_replace('/[.,\s]+$/', '', $url);
+    $origin = (parse_url($embedUrl, PHP_URL_SCHEME) ?: 'https') . '://' . parse_url($embedUrl, PHP_URL_HOST);
+    return ['url' => $url, 'referer' => $origin . '/'];
+}
+
 function self_url(string $target, string $ref): string {
     return 'https://mondary.design/pk/stream/stremio/proxy.php?url=' . base64_encode($target) . '&ref=' . base64_encode($ref);
 }
@@ -70,7 +82,32 @@ function to_absolute(string $base, string $relative): string {
     return "$scheme://$host$port$dir/$relative";
 }
 
-// ── Route 1: resolve embed → fetch m3u8 → rewrite ──
+// ── Route 1: resolve Vidzy embed subtitle track ──
+$subtitle = $_GET['subtitle'] ?? '';
+if ($subtitle) {
+    $embedUrl = base64_decode($subtitle);
+    if (!$embedUrl || !filter_var($embedUrl, FILTER_VALIDATE_URL)) {
+        http_response_code(400);
+        exit('Invalid embed URL');
+    }
+
+    $resolved = resolve_subtitle($embedUrl);
+    if (!$resolved) {
+        http_response_code(404);
+        exit('No subtitle track');
+    }
+
+    $vtt = http_get($resolved['url'], $resolved['referer']);
+    if ($vtt === null) {
+        http_response_code(502);
+        exit('Cannot fetch subtitle');
+    }
+    header('Content-Type: text/vtt; charset=utf-8');
+    echo $vtt;
+    exit;
+}
+
+// ── Route 2: resolve embed → fetch m3u8 → rewrite ──
 $embed = $_GET['embed'] ?? '';
 if ($embed) {
     $embedUrl = base64_decode($embed);
@@ -116,7 +153,7 @@ if ($embed) {
     exit;
 }
 
-// ── Route 2: pass-through segment/playlist with Referer ──
+// ── Route 3: pass-through segment/playlist with Referer ──
 $target = base64_decode($_GET['url'] ?? '');
 $ref = base64_decode($_GET['ref'] ?? '');
 if (!$target || !filter_var($target, FILTER_VALIDATE_URL)) {

@@ -1,6 +1,7 @@
 package design.mondary.pkstream
 
 import android.os.Bundle
+import android.net.Uri
 import android.util.Base64
 import android.view.ViewGroup
 import androidx.activity.compose.BackHandler
@@ -72,11 +73,12 @@ import androidx.compose.ui.input.key.onKeyEvent
 import kotlinx.coroutines.delay
 import androidx.media3.common.MediaItem
 import androidx.media3.common.C
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -87,6 +89,7 @@ import java.net.URLEncoder
 
 private const val API = "https://mondary.design/pk/stream/api.php"
 private const val PROXY = "https://mondary.design/pk/stream/stremio/proxy.php?embed="
+private const val SUBTITLE_PROXY = "https://mondary.design/pk/stream/stremio/proxy.php?subtitle="
 private val KidsBackground = Color(0xFF07182C)
 private val KidsSurface = Color(0xFF102A47)
 private val KidsYellow = Color(0xFFFFD84D)
@@ -395,6 +398,11 @@ private fun SourceButton(stream: Stream, onPlay: (Stream) -> Unit) {
 private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val source = remember(stream.url) { PROXY + URLEncoder.encode(Base64.encodeToString(stream.url.toByteArray(), Base64.NO_WRAP), "UTF-8") }
+    val subtitleUrl = remember(stream.url, stream.title) {
+        if (stream.title.contains("VOSTFR", ignoreCase = true) && stream.url.contains("vidzy", ignoreCase = true)) {
+            SUBTITLE_PROXY + URLEncoder.encode(Base64.encodeToString(stream.url.toByteArray(), Base64.NO_WRAP), "UTF-8")
+        } else null
+    }
     var playbackError by remember(source) { mutableStateOf<String?>(null) }
     var controlsVisible by remember(source) { mutableStateOf(true) }
     var lastKeyTime by remember(source) { mutableStateOf(System.currentTimeMillis()) }
@@ -403,8 +411,18 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     var subtitlesEnabled by remember(source) { mutableStateOf(false) }
     var subtitlesAvailable by remember(source) { mutableStateOf(false) }
     val player = remember(source) {
-        val mediaSource = HlsMediaSource.Factory(DefaultHttpDataSource.Factory())
-            .createMediaSource(MediaItem.fromUri(source))
+        val mediaItem = MediaItem.Builder().setUri(source).apply {
+            subtitleUrl?.let {
+                setSubtitleConfigurations(listOf(
+                    MediaItem.SubtitleConfiguration.Builder(Uri.parse(it))
+                        .setMimeType(MimeTypes.TEXT_VTT)
+                        .setLanguage("fr")
+                        .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                        .build(),
+                ))
+            }
+        }.build()
+        val mediaSource = DefaultMediaSourceFactory(context).createMediaSource(mediaItem)
         ExoPlayer.Builder(context).build().apply {
             trackSelectionParameters = trackSelectionParameters.buildUpon()
                 .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !subtitlesEnabled)
