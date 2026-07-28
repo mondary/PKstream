@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.23`
+Statut : `1.2026.25`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,10 @@ Statut : `1.2026.23`
 ---
 
 ## Releases
+
+### [1.2026.25] - 2026-07-28
+#### Fixed
+- Icône de l'app visible sur le launcher Android TV (banner + icon remplacés par l'icône PK Stream).
 
 ### [1.2026.24] - 2026-07-28
 #### Fixed

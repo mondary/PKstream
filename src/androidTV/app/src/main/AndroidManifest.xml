@@ -3,7 +3,9 @@
 
     <application
         android:allowBackup="false"
-        android:banner="@drawable/tv_banner"
+        android:banner="@drawable/pk_stream_icon"
+        android:icon="@drawable/pk_stream_icon"
+        android:roundIcon="@drawable/pk_stream_icon"
         android:label="PK Stream"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
