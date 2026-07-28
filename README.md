@@ -33,8 +33,9 @@ https://mondary.design/pk/stream/stremio/manifest.json
 src/web/        Interface web (index.html + api.php)
 src/stremio/    Addon Stremio (manifest.json + index.php + proxy.php)
 src/arvio/      Plugin ARVIO (manifest.json + scraper.js)
-app/            Application native Android TV (Kotlin + Compose + Media3)
+src/androidTV/   Application native Android TV (Kotlin + Compose + Media3)
 .github/        Workflow GitHub Actions de build APK
+release/        APK Android TV compilé
 ```
 
 ## 🧪 Déploiement
@@ -44,7 +45,7 @@ Le contenu de `src/stremio/` est déployé dans `/www/pk/stream/stremio/`.
 
 ## 📱 APK Android TV
 
-Le workflow **Build Android TV APK** de GitHub Actions génère `PK-Stream-TV-debug` après chaque modification de `app/`. Télécharge l'artefact APK depuis l'onglet Actions puis sideload-le sur Android TV.
+L'APK compilé est dans `release/app-debug.apk`. Le workflow **Build Android TV APK** recompilera l'app après chaque modification de `src/androidTV/`.
 
 ## 📋 Voir le [CHANGELOG](CHANGELOG.md) pour l'historique complet.
 
