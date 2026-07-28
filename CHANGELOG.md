@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.20`
+Statut : `1.2026.21`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,12 @@ Statut : `1.2026.20`
 ---
 
 ## Releases
+
+### [1.2026.21] - 2026-07-28
+#### Added
+- Autofocus sur le premier film au lancement de l'app (plus besoin de faire OK).
+- Séries : navigation complète par saisons (onglets) et épisodes (cartes avec synopsis et miniature).
+- Sources par épisode : chaque épisode charge ses propres sources.
 
 ### [1.2026.20] - 2026-07-28
 #### Added
