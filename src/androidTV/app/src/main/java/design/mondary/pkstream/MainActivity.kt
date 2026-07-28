@@ -70,6 +70,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.key.onKeyEvent
 import kotlinx.coroutines.delay
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -341,6 +342,8 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     var playbackError by remember(source) { mutableStateOf<String?>(null) }
     var controlsVisible by remember(source) { mutableStateOf(true) }
     var lastKeyTime by remember(source) { mutableStateOf(System.currentTimeMillis()) }
+    var speed by remember(source) { mutableStateOf(1.0f) }
+    var speedBadgeTime by remember(source) { mutableStateOf(0L) }
     val player = remember(source) {
         val mediaSource = HlsMediaSource.Factory(DefaultHttpDataSource.Factory())
             .createMediaSource(MediaItem.fromUri(source))
@@ -369,6 +372,11 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
         controlsVisible = false
     }
 
+    var speedBadgeVisible by remember(speedBadgeTime) { mutableStateOf(true) }
+    LaunchedEffect(speedBadgeTime) {
+        if (speedBadgeTime > 0) { speedBadgeVisible = true; delay(1500); speedBadgeVisible = false }
+    }
+
     BackHandler(onBack = onBack)
     Box(
         Modifier.fillMaxSize().background(Color.Black).focusable()
@@ -380,6 +388,8 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
                     Key.DirectionCenter, Key.Enter -> { if (player.isPlaying) player.pause() else player.play(); true }
                     Key.DirectionRight -> { player.seekTo((player.currentPosition + 10_000).coerceAtMost(duration)); true }
                     Key.DirectionLeft -> { player.seekTo((player.currentPosition - 10_000).coerceAtLeast(0)); true }
+                    Key.DirectionUp -> { speed = ((speed + 0.1f).coerceAtMost(3.0f) * 10).toInt() / 10f; player.playbackParameters = PlaybackParameters(speed); speedBadgeTime = System.currentTimeMillis(); true }
+                    Key.DirectionDown -> { speed = ((speed - 0.1f).coerceAtLeast(0.5f) * 10).toInt() / 10f; player.playbackParameters = PlaybackParameters(speed); speedBadgeTime = System.currentTimeMillis(); true }
                     Key.MediaPlay -> { player.play(); true }
                     Key.MediaPause -> { player.pause(); true }
                     Key.MediaPlayPause -> { if (player.isPlaying) player.pause() else player.play(); true }
@@ -401,7 +411,7 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
             ) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(formatTime(position), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Text(if (player.isPlaying) "⏸ Lecture" else "▶ Pause", color = Color(0xFFF0C44E), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(if (speed != 1.0f) "${"%.1f".format(speed)}x" else (if (player.isPlaying) "⏸ Lecture" else "▶ Pause"), color = Color(0xFFF0C44E), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Text(formatTime(duration), color = Color.LightGray, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(12.dp))
@@ -412,7 +422,13 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
                     Box(Modifier.fillMaxWidth(progress).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(Color(0xFFF0C44E)))
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("◀◀ -10s    OK: Lecture/Pause    ▶▶ +10s    Retour: Quitter", color = Color.Gray, fontSize = 13.sp)
+                Text("◀◀ -10s    ⬆⬇ Vitesse    OK: Lecture/Pause    ▶▶ +10s    Retour: Quitter", color = Color.Gray, fontSize = 13.sp)
+            }
+        }
+
+        AnimatedVisibility(speedBadgeVisible, enter = fadeIn(), exit = fadeOut(), modifier = Modifier.align(Alignment.Center)) {
+            Box(Modifier.background(Color(0xCC000000), RoundedCornerShape(16.dp)).padding(horizontal = 40.dp, vertical = 24.dp)) {
+                Text("${"%.1f".format(speed)}x", color = Color(0xFFF0C44E), fontSize = 56.sp, fontWeight = FontWeight.Black)
             }
         }
 

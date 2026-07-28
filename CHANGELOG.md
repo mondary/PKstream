@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.22`
+Statut : `1.2026.23`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,11 @@ Statut : `1.2026.22`
 ---
 
 ## Releases
+
+### [1.2026.23] - 2026-07-28
+#### Added
+- Vitesse de lecture : D-pad haut/bas ajuste la vitesse par pas de 0.1x (0.5x à 3.0x).
+- Badge flottant au centre affichant la vitesse courante pendant 1.5 sec.
 
 ### [1.2026.22] - 2026-07-28
 #### Fixed
