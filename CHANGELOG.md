@@ -26,6 +26,7 @@ Statut : `1.2026.16`
 ### [1.2026.16] - 2026-07-28
 #### Fixed
 - Chemin Gradle du workflow Android TV après la migration vers `src/androidTV/`.
+- APK Android TV `1.2026.16` compilé et publié dans `release/app-debug.apk`.
 
 ### [1.2026.15] - 2026-07-28
 #### Changed
