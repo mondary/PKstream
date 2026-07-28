@@ -1,3 +1,5 @@
+import com.android.build.api.variant.impl.VariantOutputImpl
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -32,7 +34,7 @@ kotlin { jvmToolchain(17) }
 androidComponents {
     onVariants(selector().all()) { variant ->
         variant.outputs.forEach { output ->
-            output.outputFileName.set("PK-Stream-TV-$appVersionName.apk")
+            (output as VariantOutputImpl).outputFileName.set("PK-Stream-TV-$appVersionName.apk")
         }
     }
 }
