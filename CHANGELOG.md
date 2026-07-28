@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.11`
+Statut : `1.2026.12`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -15,12 +15,19 @@ Statut : `1.2026.11`
 - [x] Proxy de streaming avec résolution en temps réel (Vidzy, Uqload, Dood, Fsvid)
 - [x] Sélecteur de saisons et épisodes
 - [x] Déploiement sur mondary.design
+- [x] App Android TV native avec lecteur Media3 et build GitHub Actions
 - [ ] Validation lecture sur NuvioTV (proxy HLS)
 - [ ] Build APK ARVIO sideload
 
 ---
 
 ## Releases
+
+### [1.2026.12] - 2026-07-28
+#### Added
+- Application Android TV native Kotlin/Compose : catalogue films et séries, D-pad, recherche, fiches et sources.
+- Lecteur Media3/ExoPlayer relié au proxy HLS existant.
+- Workflow GitHub Actions qui produit l'APK debug téléchargeable.
 
 ### [1.2026.11] - 2026-07-28
 #### Added

@@ -13,6 +13,7 @@ Web interface and streaming addons built on top of fs16.lol sources (movies and 
 - **ARVIO plugin**: NUVIO_JS scraper for a sideloaded APK.
 - **Streaming proxy**: resolves embeds (Vidzy, Uqload, Dood, Fsvid) to direct HLS in real time.
 - **Series**: season tabs, episode grid with synopsis and artwork.
+- **Android TV**: native app with D-pad navigation and integrated Media3 player.
 
 ## 🧠 Usage
 
@@ -32,12 +33,18 @@ https://mondary.design/pk/stream/stremio/manifest.json
 src/web/        Web interface (index.html + api.php)
 src/stremio/    Stremio addon (manifest.json + index.php + proxy.php)
 src/arvio/      ARVIO plugin (manifest.json + scraper.js)
+app/            Native Android TV application (Kotlin + Compose + Media3)
+.github/        GitHub Actions APK build workflow
 ```
 
 ## 🧪 Deployment
 
 Contents of `src/web/` are deployed to `/www/pk/stream/`.
 Contents of `src/stremio/` are deployed to `/www/pk/stream/stremio/`.
+
+## 📱 Android TV APK
+
+The **Build Android TV APK** GitHub Actions workflow produces `PK-Stream-TV-debug` after every change to `app/`. Download the APK artifact from the Actions tab and sideload it on Android TV.
 
 ## 📋 See [CHANGELOG](CHANGELOG.md) for full history.
 
