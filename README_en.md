@@ -45,7 +45,7 @@ Contents of `src/stremio/` are deployed to `/www/pk/stream/stremio/`.
 
 ## 📱 Android TV APK
 
-The compiled APK is available at `release/app-debug.apk`. The **Build Android TV APK** workflow rebuilds the app after every change to `src/androidTV/`.
+The compiled APK is versioned as `release/PK-Stream-TV-<version>.apk`. The **Build Android TV APK** workflow rebuilds the app after every change to `src/androidTV/`.
 
 ## 📋 See [CHANGELOG](CHANGELOG.md) for full history.
 

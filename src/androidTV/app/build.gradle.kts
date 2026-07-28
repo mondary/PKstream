@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val appVersionCode = 2
+val appVersionName = "1.2026.18"
+
 android {
     namespace = "design.mondary.pkstream"
     compileSdk = 35
@@ -12,8 +15,8 @@ android {
         applicationId = "design.mondary.pkstream"
         minSdk = 23
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.2026.17"
+        versionCode = appVersionCode
+        versionName = appVersionName
     }
 
     buildFeatures { compose = true; buildConfig = true }
@@ -25,6 +28,14 @@ android {
 }
 
 kotlin { jvmToolchain(17) }
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("PK-Stream-TV-$appVersionName.apk")
+        }
+    }
+}
 
 dependencies {
     implementation(libs.androidx.core)
