@@ -54,6 +54,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -120,6 +121,13 @@ private fun HomeScreen(onSelect: (Content) -> Unit) {
             .verticalScroll(rememberScrollState()).focusRequester(landingFocus).focusable()
     ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(R.drawable.pk_stream_icon),
+                contentDescription = "PK Stream",
+                modifier = Modifier.size(54.dp).clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop,
+            )
+            Spacer(Modifier.width(16.dp))
             Text("PK ", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black)
             Text("STREAM", color = Color(0xFFF0C44E), fontSize = 30.sp, fontWeight = FontWeight.Black)
             Spacer(Modifier.weight(1f))
