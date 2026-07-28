@@ -220,7 +220,7 @@ private fun FilmScreen(content: Content, onBack: () -> Unit, onPlay: (Stream) ->
                 Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 32.dp),
             ) {
                 Spacer(Modifier.height(40.dp))
-                Text(content.title, color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(content.title, color = Color.White, fontSize = 52.sp, lineHeight = 60.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (desc.isNotEmpty()) {
                     Spacer(Modifier.height(16.dp))
                     Text(desc, color = Color(0xFFCCCCCC), fontSize = 16.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
@@ -257,7 +257,7 @@ private fun SeriesScreen(content: Content, onBack: () -> Unit, onPlay: (Stream) 
     }
 
     Column(Modifier.fillMaxSize().background(Color(0xFF070707)).padding(48.dp).verticalScroll(rememberScrollState())) {
-        Text(content.title, color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Black)
+        Text(content.title, color = Color.White, fontSize = 40.sp, lineHeight = 48.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(24.dp))
 
         if (seasons.isNotEmpty()) {
@@ -330,7 +330,7 @@ private fun EpisodeSourcesScreen(seriesTitle: String, season: Int, episode: Epis
     }
     Row(Modifier.fillMaxSize().background(Color(0xFF070707)).padding(56.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.fillMaxHeight().padding(vertical = 42.dp), verticalArrangement = Arrangement.Center) {
-            Text(seriesTitle, color = Color.White, fontSize = 36.sp, fontWeight = FontWeight.Black)
+            Text(seriesTitle, color = Color.White, fontSize = 36.sp, lineHeight = 44.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text("S${season} E${episode.number} - ${episode.title}", color = Color(0xFFF0C44E), fontSize = 20.sp)
             Spacer(Modifier.height(24.dp))
             Text("Sources disponibles", color = Color.LightGray, fontSize = 18.sp)
