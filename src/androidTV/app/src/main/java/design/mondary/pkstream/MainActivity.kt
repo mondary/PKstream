@@ -3,6 +3,7 @@ package design.mondary.pkstream
 import android.os.Bundle
 import android.util.Base64
 import android.view.ViewGroup
+import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -11,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +38,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -46,6 +49,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -105,10 +110,15 @@ private fun PKStreamApp() {
 private fun HomeScreen(onSelect: (Content) -> Unit) {
     val home by produceState<Home?>(initialValue = null) { value = runCatching { Api.featured() }.getOrNull() }
     var query by remember { mutableStateOf("") }
+    val landingFocus = remember { FocusRequester() }
     val search by produceState<List<Content>>(initialValue = emptyList(), query) {
         value = if (query.length < 3) emptyList() else runCatching { Api.search(query) }.getOrDefault(emptyList())
     }
-    Column(Modifier.fillMaxSize().background(Color(0xFF070707)).padding(vertical = 28.dp)) {
+    LaunchedEffect(home) { if (home != null) landingFocus.requestFocus() }
+    Column(
+        Modifier.fillMaxSize().background(Color(0xFF070707)).padding(vertical = 28.dp)
+            .verticalScroll(rememberScrollState()).focusRequester(landingFocus).focusable()
+    ) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 48.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("PK ", color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Black)
             Text("STREAM", color = Color(0xFFF0C44E), fontSize = 30.sp, fontWeight = FontWeight.Black)
@@ -130,7 +140,11 @@ private fun HomeScreen(onSelect: (Content) -> Unit) {
 private fun ContentRow(title: String, entries: List<Content>, onSelect: (Content) -> Unit) {
     Column {
         Text(title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 48.dp, vertical = 10.dp))
-        LazyRow(contentPadding = PaddingValues(horizontal = 48.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        LazyRow(
+            modifier = Modifier.height(294.dp),
+            contentPadding = PaddingValues(horizontal = 48.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
             items(entries, key = { it.newsid }) { entry -> PosterCard(entry, onSelect) }
         }
     }
@@ -140,12 +154,12 @@ private fun ContentRow(title: String, entries: List<Content>, onSelect: (Content
 private fun PosterCard(content: Content, onSelect: (Content) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     Column(
-        Modifier.width(156.dp).onFocusChanged { focused = it.isFocused }
-            .scale(if (focused) 1.08f else 1f)
-            .border(if (focused) 3.dp else 0.dp, Color(0xFFF0C44E), RoundedCornerShape(10.dp))
+        Modifier.width(172.dp).onFocusChanged { focused = it.isFocused }
+            .scale(if (focused) 1.06f else 1f)
+            .border(if (focused) 4.dp else 0.dp, Color(0xFFF0C44E), RoundedCornerShape(10.dp))
             .focusable().clickable { onSelect(content) }
     ) {
-        AsyncImage(content.poster, content.title, Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)))
+        AsyncImage(content.poster, content.title, Modifier.fillMaxWidth().height(248.dp).clip(RoundedCornerShape(8.dp)))
         Text(content.title, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 8.dp))
     }
 }
@@ -162,12 +176,23 @@ private fun DetailsScreen(content: Content, onBack: () -> Unit, onPlay: (Stream)
             Text(if (content.type == "tv") "Sources - épisode 1" else "Sources disponibles", color = Color.LightGray, fontSize = 18.sp)
             Spacer(Modifier.height(18.dp))
             if (streams.isEmpty()) Text("Chargement des sources…", color = Color.Gray)
-            streams.forEach { stream ->
-                Button(onClick = { onPlay(stream) }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF0C44E), contentColor = Color.Black), modifier = Modifier.padding(vertical = 5.dp)) { Text("▶ ${stream.title}") }
-            }
+            streams.forEach { stream -> SourceButton(stream, onPlay) }
             Spacer(Modifier.height(18.dp))
             Button(onClick = onBack) { Text("Retour") }
         }
+    }
+}
+
+@Composable
+private fun SourceButton(stream: Stream, onPlay: (Stream) -> Unit) {
+    var focused by remember { mutableStateOf(false) }
+    Box(
+        Modifier.padding(vertical = 6.dp).width(360.dp).clip(RoundedCornerShape(10.dp))
+            .background(if (focused) Color.White else Color(0xFF242424))
+            .border(if (focused) 3.dp else 1.dp, if (focused) Color(0xFFF0C44E) else Color(0xFF4A4A4A), RoundedCornerShape(10.dp))
+            .onFocusChanged { focused = it.isFocused }.focusable().clickable { onPlay(stream) }.padding(16.dp)
+    ) {
+        Text("▶ ${stream.title}", color = if (focused) Color.Black else Color.White, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -197,10 +222,15 @@ private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
             player.release()
         }
     }
+    BackHandler(onBack = onBack)
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        AndroidView(factory = { PlayerView(it).apply { this.player = player; layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT) } }, modifier = Modifier.fillMaxSize())
+        AndroidView(factory = { PlayerView(it).apply {
+            this.player = player
+            useController = true
+            controllerShowTimeoutMs = 3_000
+            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        } }, modifier = Modifier.fillMaxSize())
         playbackError?.let { Text(it, color = Color.White, modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp).background(Color(0xCC7A1E1E), RoundedCornerShape(8.dp)).padding(14.dp)) }
-        Button(onClick = onBack, modifier = Modifier.align(Alignment.TopEnd).padding(24.dp)) { Text("Retour") }
     }
 }
 

@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.18`
+Statut : `1.2026.19`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,12 @@ Statut : `1.2026.18`
 ---
 
 ## Releases
+
+### [1.2026.19] - 2026-07-28
+#### Changed
+- Lecteur : suppression du bouton Retour permanent ; contrôles Media3 auto-masqués et touche Retour Android TV prise en charge.
+- Home : focus initial sur le catalogue, sans clavier de recherche automatique ; rails verticalement scrollables et affiches séries agrandies.
+- Focus : bord doré limité à la carte sélectionnée ; sources non sélectionnées sombres et source sélectionnée blanche.
 
 ### [1.2026.18] - 2026-07-28
 #### Changed
