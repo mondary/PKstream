@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.8`
+Statut : `1.2026.9`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -21,6 +21,10 @@ Statut : `1.2026.8`
 ---
 
 ## Releases
+
+### [1.2026.9] - 2026-07-28
+#### Fixed
+- Films/séries mélangés : source corrigée — films depuis `/films/`, séries depuis `/s-tv/` (pages dédiées fs16).
 
 ### [1.2026.8] - 2026-07-28
 #### Fixed
