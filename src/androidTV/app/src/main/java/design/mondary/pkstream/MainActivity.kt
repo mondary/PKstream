@@ -209,7 +209,7 @@ private fun FilmScreen(content: Content, onBack: () -> Unit, onPlay: (Stream) ->
     val backdrop = details?.optString("backdrop") ?: ""
     val desc = details?.optString("description") ?: ""
     Box(Modifier.fillMaxSize().background(Color(0xFF070707))) {
-        if (backdrop.isNotEmpty()) AsyncImage(backdrop, "", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        if (backdrop.isNotEmpty()) AsyncImage(backdrop, "", Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Color(0xDD070707)))
         Row(Modifier.fillMaxSize().padding(horizontal = 64.dp, vertical = 48.dp)) {
             Column(Modifier.width(320.dp).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
