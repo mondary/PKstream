@@ -203,16 +203,35 @@ private fun FilmScreen(content: Content, onBack: () -> Unit, onPlay: (Stream) ->
     val streams by produceState<List<Stream>>(initialValue = emptyList(), content.newsid) {
         value = runCatching { Api.streams(content.newsid, "film") }.getOrDefault(emptyList())
     }
-    Row(Modifier.fillMaxSize().background(Color(0xFF070707)).padding(56.dp), verticalAlignment = Alignment.CenterVertically) {
-        AsyncImage(content.poster, content.title, Modifier.width(280.dp).aspectRatio(2f / 3f).clip(RoundedCornerShape(14.dp)))
-        Spacer(Modifier.width(44.dp))
-        Column(Modifier.fillMaxHeight().padding(vertical = 42.dp), verticalArrangement = Arrangement.Center) {
-            Text(content.title, color = Color.White, fontSize = 44.sp, fontWeight = FontWeight.Black)
-            Spacer(Modifier.height(24.dp))
-            Text("Sources disponibles", color = Color.LightGray, fontSize = 18.sp)
-            Spacer(Modifier.height(18.dp))
-            if (streams.isEmpty()) Text("Chargement des sources…", color = Color.Gray)
-            streams.forEach { stream -> SourceButton(stream, onPlay) }
+    val details by produceState<JSONObject?>(null, content.newsid) {
+        value = runCatching { Api.details(content.newsid) }.getOrNull()
+    }
+    val backdrop = details?.optString("backdrop") ?: ""
+    val desc = details?.optString("description") ?: ""
+    Box(Modifier.fillMaxSize().background(Color(0xFF070707))) {
+        if (backdrop.isNotEmpty()) AsyncImage(backdrop, "", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        Box(Modifier.fillMaxSize().background(Color(0xDD070707)))
+        Row(Modifier.fillMaxSize().padding(horizontal = 64.dp, vertical = 48.dp)) {
+            Column(Modifier.width(320.dp).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
+                AsyncImage(content.poster, content.title, Modifier.width(320.dp).aspectRatio(2f / 3f).clip(RoundedCornerShape(16.dp)))
+            }
+            Spacer(Modifier.width(56.dp))
+            Column(
+                Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState()).padding(vertical = 32.dp),
+            ) {
+                Spacer(Modifier.height(40.dp))
+                Text(content.title, color = Color.White, fontSize = 52.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                if (desc.isNotEmpty()) {
+                    Spacer(Modifier.height(16.dp))
+                    Text(desc, color = Color(0xFFCCCCCC), fontSize = 16.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                }
+                Spacer(Modifier.height(28.dp))
+                Text("Sources disponibles", color = Color(0xFFF0C44E), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(16.dp))
+                if (streams.isEmpty()) Text("Chargement des sources…", color = Color.Gray, fontSize = 18.sp)
+                streams.forEach { stream -> SourceButton(stream, onPlay) }
+                Spacer(Modifier.height(60.dp))
+            }
         }
     }
 }
@@ -326,7 +345,7 @@ private fun EpisodeSourcesScreen(seriesTitle: String, season: Int, episode: Epis
 private fun SourceButton(stream: Stream, onPlay: (Stream) -> Unit) {
     var focused by remember { mutableStateOf(false) }
     Box(
-        Modifier.padding(vertical = 6.dp).width(360.dp).clip(RoundedCornerShape(10.dp))
+        Modifier.padding(vertical = 6.dp).fillMaxWidth(0.6f).clip(RoundedCornerShape(10.dp))
             .background(if (focused) Color.White else Color(0xFF242424))
             .border(if (focused) 3.dp else 1.dp, if (focused) Color(0xFFF0C44E) else Color(0xFF4A4A4A), RoundedCornerShape(10.dp))
             .onFocusChanged { focused = it.isFocused }.focusable().clickable { onPlay(stream) }.padding(16.dp)
@@ -459,6 +478,8 @@ private object Api {
 
     suspend fun search(q: String): List<Content> =
         JSONObject(get("?api=search&q=${URLEncoder.encode(q, "UTF-8")}")).array("results", null)
+
+    suspend fun details(id: String): JSONObject = JSONObject(get("?api=details&id=$id"))
 
     suspend fun seasons(title: String, id: String): List<Season> {
         val json = JSONObject(get("?api=seasons&title=${URLEncoder.encode(title, "UTF-8")}&id=$id"))

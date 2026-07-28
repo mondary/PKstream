@@ -23,6 +23,12 @@ Statut : `1.2026.23`
 
 ## Releases
 
+### [1.2026.24] - 2026-07-28
+#### Fixed
+- Fiche film : toutes les sources visibles grâce au scroll vertical (D-pad navigue dans toute la liste).
+- Backdrop plein écran + synopsis depuis l'API details.
+- Boutons sources élargis (60% de la largeur).
+
 ### [1.2026.23] - 2026-07-28
 #### Added
 - Vitesse de lecture : D-pad haut/bas ajuste la vitesse par pas de 0.1x (0.5x à 3.0x).
