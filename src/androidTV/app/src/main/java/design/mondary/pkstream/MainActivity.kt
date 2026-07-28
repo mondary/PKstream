@@ -3,10 +3,6 @@ package design.mondary.pkstream
 import android.os.Bundle
 import android.util.Base64
 import android.view.ViewGroup
-import android.webkit.CookieManager
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -109,7 +105,7 @@ data class Content(
     val source: String = "fs16",
 )
 data class Home(val films: List<Content>, val series: List<Content>, val animes: List<Content>)
-data class Stream(val title: String, val url: String, val embed: Boolean = false)
+data class Stream(val title: String, val url: String)
 data class Season(val season: Int, val newsid: String, val title: String)
 data class Episode(val number: Int, val title: String, val synopsis: String, val poster: String)
 
@@ -398,26 +394,6 @@ private fun SourceButton(stream: Stream, onPlay: (Stream) -> Unit) {
 @Composable
 private fun PlayerScreen(stream: Stream, onBack: () -> Unit) {
     val context = androidx.compose.ui.platform.LocalContext.current
-    if (stream.embed && stream.title.contains("VOSTFR", ignoreCase = true)) {
-        BackHandler(onBack = onBack)
-        AndroidView(
-            factory = { ctx ->
-                CookieManager.getInstance().setAcceptCookie(true)
-                WebView(ctx).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.mediaPlaybackRequiresUserGesture = false
-                    settings.userAgentString = "Mozilla/5.0 (Linux; Android 12; Android TV) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36"
-                    webViewClient = WebViewClient()
-                    webChromeClient = WebChromeClient()
-                    setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
-                    loadUrl(stream.url)
-                }
-            },
-            modifier = Modifier.fillMaxSize().background(Color.Black),
-        )
-        return
-    }
     val source = remember(stream.url) { PROXY + URLEncoder.encode(Base64.encodeToString(stream.url.toByteArray(), Base64.NO_WRAP), "UTF-8") }
     var playbackError by remember(source) { mutableStateOf<String?>(null) }
     var controlsVisible by remember(source) { mutableStateOf(true) }
@@ -589,7 +565,7 @@ private object Api {
         val suffix = if (type == "tv") "&t=tv&s=$season&e=$episode" else "&t=film"
         return JSONObject(get("?api=streams&id=$id$suffix&source=$source")).getJSONArray("streams").let { array ->
             List(array.length()) { index ->
-                array.getJSONObject(index).let { Stream(it.getString("title"), it.getString("url"), it.optBoolean("embed", false)) }
+                array.getJSONObject(index).let { Stream(it.getString("title"), it.getString("url")) }
             }
         }
     }
