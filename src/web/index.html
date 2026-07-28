@@ -20,9 +20,9 @@ img{display:block;max-width:100%}
 .brand{font-weight:900;letter-spacing:-.06em;font-size:22px;flex-shrink:0}
 .brand b{color:var(--accent)}
 .nav-search{flex:1;display:flex;justify-content:center;max-width:520px;margin:0 auto}
-.nav-search input{width:100%;background:transparent;border:1px solid transparent;border-radius:999px;color:#fff;font-size:15px;padding:10px 20px;outline:none;transition:background 200ms,border-color 200ms}
-.nav-search input:focus{background:#1a1a1a;border-color:#ffffff18}
-.nav-search input::placeholder{color:#666}
+.nav-search input{width:100%;background:#181818;border:1px solid #444;border-radius:999px;color:#fff;font-size:16px;padding:12px 24px;outline:none;transition:border-color 200ms,box-shadow 200ms}
+.nav-search input:focus{border-color:var(--accent);box-shadow:0 0 0 2px #f0c44e30}
+.nav-search input::placeholder{color:#888}
 .nav-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
 .avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#111;display:grid;place-items:center;font-weight:900;font-size:14px}
 
@@ -251,7 +251,13 @@ let searchTimer,lastSearchReq;
 $('search-input').addEventListener('input',()=>{
   clearTimeout(searchTimer);
   const q=$('search-input').value.trim();
-  if(q.length<3){closeSearchView();return;}
+  if(q.length<3){
+    $('search-view').classList.remove('open');
+    $('hero-section').style.display='';
+    $('rails').style.display='';
+    $('search-results').innerHTML='';
+    return;
+  }
   searchTimer=setTimeout(()=>doSearch(q),400);
 });
 async function doSearch(q){
@@ -286,7 +292,6 @@ function closeSearchView(){
   $('hero-section').style.display='';
   $('rails').style.display='';
   $('search-results').innerHTML='';
-  $('search-input').value='';
 }
 
 /* ── DETAIL ── */
@@ -413,7 +418,9 @@ function closePlayer(){$('player-frame').src='';$('player-overlay').classList.re
 window.addEventListener('scroll',()=>$('nav').classList.toggle('scrolled',scrollY>40));
 function goHome(){closeSearchView();closeDetail();scrollTo({top:0,behavior:'smooth'});}
 function goSeries(){closeSearchView();closeDetail();$('series-section').scrollIntoView({behavior:'smooth'});}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePlayer();closeDetail();closeSearchView();$('search-input').blur();}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closePlayer();closeDetail();closeSearchView();$('search-input').value='';$('search-input').blur();}
+});
 
 loadHome();
 </script>
