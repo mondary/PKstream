@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `1.2026.10`
+Statut : `1.2026.11`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -21,6 +21,11 @@ Statut : `1.2026.10`
 ---
 
 ## Releases
+
+### [1.2026.11] - 2026-07-28
+#### Added
+- Navigation clavier dans les rails : flèches gauche/droite dans un rail, haut/bas entre rails, Entrée pour ouvrir.
+- Hero diaporama : rotation automatique toutes les 6 sec avec fade in/out crossfade entre les 8 premiers films.
 
 ### [1.2026.10] - 2026-07-28
 #### Changed
