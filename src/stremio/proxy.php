@@ -65,7 +65,7 @@ function resolve_subtitle(string $embedUrl): ?array {
 }
 
 function self_url(string $target, string $ref): string {
-    return 'https://mondary.design/pk/stream/stremio/proxy.php?url=' . base64_encode($target) . '&ref=' . base64_encode($ref);
+    return 'https://mondary.design/pk/-Videos/stream/stremio/proxy.php?url=' . base64_encode($target) . '&ref=' . base64_encode($ref);
 }
 
 function to_absolute(string $base, string $relative): string {

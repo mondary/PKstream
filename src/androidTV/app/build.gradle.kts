@@ -6,10 +6,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val adultVersionCode = 45
-val adultVersionName = "2026.08.45"
-val kidsVersionCode = 45
-val kidsVersionName = "2026.08.45-kids"
+val adultVersionCode = 46
+val adultVersionName = "2026.08.46"
+val kidsVersionCode = 46
+val kidsVersionName = "2026.08.46-kids"
 
 android {
     namespace = "design.mondary.pkstream"

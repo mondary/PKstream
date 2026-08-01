@@ -96,9 +96,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
-private const val API = "https://mondary.design/pk/stream/api.php"
-private const val PROXY = "https://mondary.design/pk/stream/stremio/proxy.php?embed="
-private const val SUBTITLE_PROXY = "https://mondary.design/pk/stream/stremio/proxy.php?subtitle="
+private const val API = "https://mondary.design/pk/-Videos/stream/api.php"
+private const val PROXY = "https://mondary.design/pk/-Videos/stream/stremio/proxy.php?embed="
+private const val SUBTITLE_PROXY = "https://mondary.design/pk/-Videos/stream/stremio/proxy.php?subtitle="
 private val KidsBackground = Color(0xFF07182C)
 private val KidsSurface = Color(0xFF102A47)
 private val KidsYellow = Color(0xFFFFD84D)

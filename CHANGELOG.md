@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur des sources
 
 ## TODO — Roadmap
 
-Statut : `2026.08.45`
+Statut : `2026.08.46`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,10 @@ Statut : `2026.08.45`
 ---
 
 ## Releases
+
+### [2026.08.46] - 2026-08-01
+#### Fixed
+- L'app Android TV restait bloquée sur « Chargement… » : les URLs d'API et de proxy codées en dur pointaient vers un ancien chemin serveur (403). Mise à jour vers le chemin actuel (également corrigé côté addon Stremio).
 
 ### [2026.08.45] - 2026-08-01
 #### Fixed

@@ -102,7 +102,7 @@ function resolveEmbed(string $embedUrl): ?array {
 }
 
 function proxyUrl(string $embedUrl): string {
-    return 'https://mondary.design/pk/stream/stremio/proxy.php?embed=' . base64_encode($embedUrl);
+    return 'https://mondary.design/pk/-Videos/stream/stremio/proxy.php?embed=' . base64_encode($embedUrl);
 }
 
 function stream(string $url, string $name): array {
