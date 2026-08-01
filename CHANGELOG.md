@@ -6,7 +6,7 @@ Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
 
 ## TODO — Roadmap
 
-Statut : `2026.08.44`
+Statut : `2026.08.45`
 
 ### Phase 1 — Interface et addons
 - [x] Interface web responsive (hero, rails, recherche live, fiches détaillées)
@@ -22,6 +22,10 @@ Statut : `2026.08.44`
 ---
 
 ## Releases
+
+### [2026.08.45] - 2026-08-01
+#### Fixed
+- La recherche ne se lance plus à chaque frappe (qui spam fs16 et déclenche un cooldown) : elle s'exécute maintenant à la validation (touche Entrée), côté web et app Android TV.
 
 ### [2026.08.44] - 2026-07-28
 #### Fixed

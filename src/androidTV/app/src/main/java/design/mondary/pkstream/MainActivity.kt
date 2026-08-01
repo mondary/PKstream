@@ -42,6 +42,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -150,12 +153,13 @@ private fun PKStreamApp() {
 private fun HomeScreen(onSelect: (Content) -> Unit) {
     val home by produceState<Home?>(initialValue = null) { value = runCatching { if (IsKids) Api.kids() else Api.featured() }.getOrNull() }
     var query by remember { mutableStateOf("") }
-    val search by produceState<List<Content>>(initialValue = emptyList(), query, home) {
+    var submitted by remember { mutableStateOf("") }
+    val search by produceState<List<Content>>(initialValue = emptyList(), submitted, home) {
         value = when {
-            query.length < 3 -> emptyList()
+            submitted.length < 3 -> emptyList()
             IsKids -> listOf(home?.films.orEmpty(), home?.series.orEmpty(), home?.animes.orEmpty()).flatten()
-                .filter { it.title.contains(query, ignoreCase = true) }
-            else -> runCatching { Api.search(query) }.getOrDefault(emptyList())
+                .filter { it.title.contains(submitted, ignoreCase = true) }
+            else -> runCatching { Api.search(submitted) }.getOrDefault(emptyList())
         }
     }
     val firstCardFocus = remember { FocusRequester() }
@@ -186,6 +190,8 @@ private fun HomeScreen(onSelect: (Content) -> Unit) {
                 onValueChange = { query = it },
                 label = { Text("Rechercher") },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { submitted = query.trim() }),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -199,7 +205,7 @@ private fun HomeScreen(onSelect: (Content) -> Unit) {
             )
         }
         Spacer(Modifier.height(26.dp))
-        if (query.length >= 3) ContentRow("Résultats", search, onSelect, firstCardFocus)
+        if (submitted.length >= 3) ContentRow("Résultats", search, onSelect, firstCardFocus)
         else if (home == null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Chargement…", color = Color.LightGray) }
         else {
             ContentRow(if (IsKids) "Films animation" else "Derniers films", home!!.films, onSelect, firstCardFocus)

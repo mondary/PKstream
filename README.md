@@ -8,7 +8,7 @@ Interface web et addons de streaming construits autour des sources fs16.lol (fil
 
 ## ✅ Fonctionnalités
 
-- **Interface web** : hero dynamique, rails horizontaux, recherche live, fiches détaillées, lecteur intégré.
+- **Interface web** : hero dynamique, rails horizontaux, recherche à la validation (Entrée), fiches détaillées, lecteur intégré.
 - **Addon Stremio** : compatible NuvioTV et Lumera (catalogues, métadonnées, sources).
 - **Plugin ARVIO** : scraper NUVIO_JS pour une APK sideload.
 - **Proxy de streaming** : résout les lecteurs (Vidzy, Uqload, Dood, Fsvid) en HLS direct en temps réel.

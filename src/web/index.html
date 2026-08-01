@@ -329,24 +329,11 @@ function renderRail(items,id,type,key){
     </button>`).join('');
 }
 
-/* ── SEARCH (live, inline) ── */
-let searchTimer,lastSearchReq;
-$('search-input').addEventListener('input',()=>{
-  clearTimeout(searchTimer);
-  const q=$('search-input').value.trim();
-  if(q.length<1){
-    $('search-view').classList.remove('open');
-    $('hero-section').style.display='';
-    $('rails').style.display='';
-    $('search-results').innerHTML='';
-    return;
-  }
-  searchTimer=setTimeout(()=>doSearch(q),250);
-});
+/* ── SEARCH (on Enter) ── */
+let lastSearchReq;
 $('search-input').addEventListener('keydown',e=>{
   if(e.key==='Enter'){
     e.preventDefault();
-    clearTimeout(searchTimer);
     const q=$('search-input').value.trim();
     if(q.length>=1)doSearch(q);
   }
