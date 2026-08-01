@@ -1,6 +1,6 @@
 # Changelog
 
-Projet PK Stream — interface web et addons de streaming basés sur fs16.lol.
+Projet PK Stream — interface web et addons de streaming basés sur des sources de streaming tiers.
 
 ---
 
@@ -14,7 +14,7 @@ Statut : `2026.08.45`
 - [x] Plugin NUVIO_JS pour ARVIO sideload
 - [x] Proxy de streaming avec résolution en temps réel (Vidzy, Uqload, Dood, Fsvid)
 - [x] Sélecteur de saisons et épisodes
-- [x] Déploiement sur mondary.design
+- [x] Déploiement en ligne
 - [x] App Android TV native avec lecteur Media3 et build GitHub Actions
 - [ ] Validation lecture sur NuvioTV (proxy HLS)
 - [ ] Build APK ARVIO sideload
@@ -207,9 +207,9 @@ Statut : `2026.08.45`
 - Addon Stremio HTTP compatible NuvioTV et Lumera (catalogue, meta, stream).
 - Proxy de streaming PHP qui résout les embeds en temps réel (token toujours frais).
 - Dépacker JavaScript corrigé pour préserver les noms de paramètres d'URL.
-- Plugin NUVIO_JS pour ARVIO avec scraper fs16.lol (films et séries).
+- Plugin NUVIO_JS pour ARVIO avec scraper sur sources de streaming (films et séries).
 - API web avec endpoints featured, search, details, episodes, seasons, streams.
-- Déploiement FTP automatisé vers `/www/pk/stream/`.
+- Déploiement FTP automatisé vers le serveur.
 
 ### [0.10] - 2026-07-27
 #### Added

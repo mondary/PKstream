@@ -4,7 +4,7 @@
 
 # PK Stream
 
-Interface web et addons de streaming construits autour des sources fs16.lol (films et séries en VF/VOSTFR).
+Interface web et addons de streaming construits autour de sources de streaming tiers (films et séries en VF/VOSTFR).
 
 ## ✅ Fonctionnalités
 
@@ -17,15 +17,12 @@ Interface web et addons de streaming construits autour des sources fs16.lol (fil
 
 ## 🧠 Utilisation
 
-1. Ouvre `https://mondary.design/pk/stream/` dans ton navigateur.
+1. Ouvre l'interface web dans ton navigateur.
 2. Recherche un titre ou parcours les rails de nouveautés.
 3. Clique sur un film ou une série pour voir la fiche détaillée.
 4. Choisis une source et lance la lecture.
 
-Pour NuvioTV ou Lumera, ajoute l'addon :
-```
-https://mondary.design/pk/stream/stremio/manifest.json
-```
+Pour NuvioTV ou Lumera, ajoute l'addon via l'URL du `manifest.json` Stremio (voir `src/stremio/manifest.json`).
 
 ## 📦 Structure
 
@@ -40,16 +37,10 @@ release/        APK Android TV compilé
 
 ## 🧪 Déploiement
 
-Le contenu de `src/web/` est déployé dans `/www/pk/stream/`.
-Le contenu de `src/stremio/` est déployé dans `/www/pk/stream/stremio/`.
+Le contenu de `src/web/` et de `src/stremio/` est déployé sur ton hébergement (chemins à adapter selon ton serveur).
 
 ## 📱 APK Android TV
 
 L'APK compilé est versionné dans `release/PK-Stream-TV-<version>.apk`. Le workflow **Build Android TV APK** recompilera l'app après chaque modification de `src/androidTV/`.
 
 ## 📋 Voir le [CHANGELOG](CHANGELOG.md) pour l'historique complet.
-
-## 🔗 Liens
-
-- Site : `https://mondary.design/pk/stream/`
-- Addon Stremio : `https://mondary.design/pk/stream/stremio/manifest.json`
