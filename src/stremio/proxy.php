@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+ini_set('pcre.jit', 0);
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
@@ -29,7 +30,7 @@ function http_get(string $url, string $referer): ?string {
 }
 
 function unpack_packer(string $html): ?string {
-    if (!preg_match("/}\('((?:\\\\.|[^'])*)',(\d+),\d+,'((?:\\\\.|[^'])*)'\.split\('\\|'\)/s", $html, $m)) return null;
+    if (!preg_match("/}\('((?:\\\\.|[^'\\\\])*)',(\d+),\d+,'((?:\\\\.|[^'\\\\])*)'\.split\('\\|'\)/s", $html, $m)) return null;
     $payload = stripcslashes($m[1]);
     $radix = (int)$m[2];
     $words = explode('|', stripcslashes($m[3]));
