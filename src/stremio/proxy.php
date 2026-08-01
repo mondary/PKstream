@@ -94,14 +94,14 @@ if ($subtitle) {
 
     $resolved = resolve_subtitle($embedUrl);
     if (!$resolved) {
-        http_response_code(404);
-        exit('No subtitle track');
+        header('Content-Type: text/vtt; charset=utf-8');
+        exit("WEBVTT\n");
     }
 
     $vtt = http_get($resolved['url'], $resolved['referer']);
     if ($vtt === null) {
-        http_response_code(502);
-        exit('Cannot fetch subtitle');
+        header('Content-Type: text/vtt; charset=utf-8');
+        exit("WEBVTT\n");
     }
     header('Content-Type: text/vtt; charset=utf-8');
     echo $vtt;
